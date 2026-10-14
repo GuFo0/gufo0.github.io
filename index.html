@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Cryptography & Blockchain — Homework Portfolio</title>
+        <style>
+            :root {
+                --bg: #f8fafc;
+                --card-bg: #ffffff;
+                --border: #e2e8f0;
+                --border-hover: #cbd5e1;
+                --text: #0f172a;
+                --text-muted: #64748b;
+                --primary: #2563eb;
+                --primary-hover: #1d4ed8;
+                --badge-green-bg: #ecfdf5;
+                --badge-green-text: #065f46;
+                --badge-gray-bg: #f1f5f9;
+                --badge-gray-text: #64748b;
+                --badge-yellow-text: #ff6f00;
+                --badge-yellow-bg: #ffe082;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    Helvetica, Arial, sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.6;
+                margin: 0;
+                padding: 40px 20px;
+            }
+
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+            }
+
+            /* Profile / Header */
+            header {
+                margin-bottom: 36px;
+                border-bottom: 2px solid var(--border);
+                padding-bottom: 20px;
+            }
+
+            h1 {
+                font-size: 2.2rem;
+                font-weight: 700;
+                margin: 0 0 8px 0;
+                color: var(--text);
+            }
+
+            .subtitle {
+                font-size: 1.15rem;
+                color: var(--text-muted);
+                margin: 0 0 12px 0;
+            }
+
+            .meta {
+                font-size: 0.95rem;
+                color: var(--text-muted);
+                display: flex;
+                gap: 16px;
+                flex-wrap: wrap;
+            }
+
+            .meta a {
+                color: var(--primary);
+                text-decoration: none;
+                font-weight: 500;
+            }
+
+            .meta a:hover {
+                text-decoration: underline;
+            }
+
+            /* Homework Cards List */
+            .hw-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 18px;
+            }
+
+            .hw-card {
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 22px 26px;
+                text-decoration: none;
+                color: inherit;
+                display: block;
+                transition: all 0.2s ease;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            }
+
+            /* Hover effect for active homeworks */
+            a.hw-card:hover {
+                border-color: var(--primary);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);
+            }
+
+            .hw-card.disabled {
+                opacity: 0.65;
+                cursor: not-allowed;
+                background: #fafafa;
+            }
+
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .hw-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: var(--text);
+                margin: 0;
+            }
+
+            a.hw-card:hover .hw-title {
+                color: var(--primary);
+            }
+
+            .badge {
+                font-size: 0.8rem;
+                font-weight: 600;
+                padding: 4px 10px;
+                border-radius: 20px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .badge-completed {
+                background: var(--badge-green-bg);
+                color: var(--badge-green-text);
+                border: 1px solid #a7f3d0;
+            }
+
+            .badge-upcoming {
+                background: var(--badge-gray-bg);
+                color: var(--badge-gray-text);
+                border: 1px solid #e2e8f0;
+            }
+
+            .badge-inprogress {
+                background: var(--badge-yellow-bg);
+                color: var(--badge-yellow-text);
+                border: 1px solid #ffca28;
+            }
+
+            .hw-desc {
+                font-size: 0.98rem;
+                color: var(--text-muted);
+                margin: 0 0 12px 0;
+            }
+
+            .hw-tags {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .tag {
+                font-size: 0.82rem;
+                font-family: "Fira Code", monospace;
+                background: #f1f5f9;
+                color: #475569;
+                padding: 3px 8px;
+                border-radius: 5px;
+            }
+
+            footer {
+                margin-top: 50px;
+                text-align: center;
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                border-top: 1px solid var(--border);
+                padding-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Statistics Homeworks Portfolio</h1>
+                <p class="subtitle">
+                    Interactive lab demonstrations and theoretical explorations.
+                </p>
+                <div class="meta">
+                    <span>Student: <strong>Guglielmo Forte</strong></span>
+                    <span>&bull;</span>
+                    <span>Course: <strong>Statistics</strong></span>
+                    <span>&bull;</span>
+                    <a
+                        href="https://github.com/GuFo0"
+                        target="_blank"
+                        rel="noopener"
+                        >GitHub Profile &rarr;</a
+                    >
+                </div>
+            </header>
+
+            <!-- List of Homeworks -->
+            <div class="hw-grid">
+                <a href="hmwk1.html" class="hw-card">
+                    <div class="card-header">
+                        <h2 class="hw-title">
+                            HMWK 1 — Public-Key Cryptography (ECDLP &amp;
+                            secp256k1)
+                        </h2>
+                        <span class="badge badge-completed">Completed</span>
+                    </div>
+                    <p class="hw-desc">
+                        Interactive miniature model of Ethereum's elliptic curve
+                        (<i>y</i><sup>2</sup> &equiv; <i>x</i><sup>3</sup> + 7
+                        mod 17). Computes public keys (<i>Q = kG</i>) via point
+                        addition/doubling with step-by-step canvas animations
+                        and statistical distribution charts.
+                    </p>
+                    <div class="hw-tags">
+                        <span class="tag">Elliptic Curves</span>
+                        <span class="tag">ECDLP</span>
+                        <span class="tag">secp256k1</span>
+                        <span class="tag">Avalanche Effect</span>
+                    </div>
+                </a>
+
+                <a href="hmwk2.html" class="hw-card">
+                    <div class="card-header">
+                        <h2 class="hw-title">
+                            HMWK 2 — From Wallet Seed to Ethereum Address
+                        </h2>
+                        <span class="badge badge-inprogress">In Progress</span>
+                    </div>
+                    <p class="hw-desc">
+                        Check the practical cryptographic pipeline used in
+                        Ethereum wallets, from a mnemonic phrase to an Ethereum
+                        address and briefly describe the role and purpose of
+                        some standards and cryptographic primitives
+                    </p>
+                    <div class="hw-tags">
+                        <span class="tag">Key Derivation</span>
+                        <span class="tag">PKE</span>
+                        <span class="tag">Hashing</span>
+                        <span class="tag">Checksum</span>
+                    </div>
+                </a>
+
+                <!-- HOMEWORK 3 (Placeholder) -->
+                <div class="hw-card disabled">
+                    <div class="card-header">
+                        <h2 class="hw-title">HMWK 3 — Upcoming Assignment</h2>
+                        <span class="badge badge-upcoming">Upcoming</span>
+                    </div>
+                    <p class="hw-desc">Topic to be announced.</p>
+                    <div class="hw-tags">
+                        <span class="tag">Pending</span>
+                    </div>
+                </div>
+            </div>
+
+            <footer>
+                &copy;
+                <script>
+                    document.write(new Date().getFullYear());
+                </script>
+                — Hosted on GitHub Pages
+            </footer>
+        </div>
+    </body>
+</html>
