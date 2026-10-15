@@ -39,6 +39,31 @@
                 margin: 0 auto;
             }
 
+            /* Go Back Button */
+            .back-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 14px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #334155;
+                background: #ffffff;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                text-decoration: none;
+                margin-bottom: 20px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                transition: all 0.15s ease;
+            }
+
+            .back-btn:hover {
+                background: #f1f5f9;
+                color: var(--primary);
+                border-color: #94a3b8;
+                transform: translateX(-2px);
+            }
+
             header {
                 margin-bottom: 24px;
                 border-bottom: 2px solid var(--border);
@@ -222,7 +247,6 @@
                 font-style: italic;
             }
 
-            /* Metric highlights */
             .metric-box {
                 background: #f8fafc;
                 border: 1px solid var(--border);
@@ -243,6 +267,11 @@
     </head>
     <body>
         <div class="container">
+            <!-- Top Go Back Button -->
+            <a href="index.html" class="back-btn"
+                >&larr; Back to All Homeworks</a
+            >
+
             <header>
                 <h1>
                     Toy Public-Key Cryptography:
@@ -262,7 +291,7 @@
                 </p>
             </header>
 
-            <!-- Section 1: Interactive Algorithm -->
+            <!-- Interactive Algorithm -->
             <div class="grid-2">
                 <div class="card">
                     <h2>
@@ -373,7 +402,7 @@
                 </div>
             </div>
 
-            <!-- Section 2: Statistical Exploration -->
+            <!-- Statistical Exploration -->
             <div class="card">
                 <h2>2. Statistical Exploration Dashboard</h2>
                 <p>
@@ -382,7 +411,6 @@
                     <span class="math">N</span>:
                 </p>
 
-                <!-- 4 Summary KPI boxes -->
                 <div
                     style="
                         display: grid;
@@ -416,7 +444,6 @@
                     </div>
                 </div>
 
-                <!-- Live 2x2 Canvas Charts -->
                 <div class="grid-2">
                     <!-- Chart 1: Trajectory -->
                     <div style="text-align: center">
@@ -432,7 +459,7 @@
                         ></canvas>
                         <p style="font-size: 0.85rem; margin-top: 4px">
                             Note the
-                            <strong>symmetric bell shape of x</strong> (blue) vs
+                            <strong>symmetric parabola of x</strong> (blue) vs
                             the scattered jumps of y (green).
                         </p>
                     </div>
@@ -454,7 +481,6 @@
                         </p>
                     </div>
 
-                    <!-- Chart 3: Bit Frequencies -->
                     <div style="text-align: center">
                         <h3>Chart 3: Bit Distribution (% of ones)</h3>
                         <canvas
@@ -490,7 +516,7 @@
                 </div>
             </div>
 
-            <!-- Section 3: Theoretical Discussion -->
+            <!-- Theoretical Discussion -->
             <div class="card">
                 <h2>3. Cryptographic Discussion: ECDLP vs. Hash Functions</h2>
                 <div
@@ -560,7 +586,6 @@
         </div>
 
         <script>
-            // --- Modulo 17 Math Engine ---
             const P = 17;
 
             function mod(n, m = P) {
@@ -658,7 +683,6 @@
                 return vx === 0 || vy === 0 ? 0 : cov / Math.sqrt(vx * vy);
             }
 
-            // --- State & Canvas References ---
             const allPoints = getAllValidPoints();
             let currentBase = [1, 5];
             let fullSequence = [];
@@ -682,7 +706,6 @@
                 renderStats();
             }
 
-            // --- Canvas 1: 17x17 Field Grid ---
             function renderCanvas() {
                 const w = canvas.width;
                 const h = canvas.height;
@@ -691,7 +714,6 @@
 
                 ctx.clearRect(0, 0, w, h);
 
-                // Axes & grid
                 ctx.strokeStyle = "#f1f5f9";
                 ctx.lineWidth = 1;
                 ctx.fillStyle = "#64748b";
@@ -717,7 +739,6 @@
                     ctx.fillText(i, padding - 16, py);
                 }
 
-                // All valid points
                 for (const [x, y] of allPoints) {
                     const px = padding + x * step;
                     const py = h - padding - y * step;
@@ -727,7 +748,6 @@
                     ctx.fill();
                 }
 
-                // Connecting lines
                 if (currentStepIndex > 0) {
                     ctx.strokeStyle = "#93c5fd";
                     ctx.lineWidth = 2.5;
@@ -750,7 +770,6 @@
                     ctx.lineWidth = 1;
                 }
 
-                // Generator G
                 const gx = padding + currentBase[0] * step;
                 const gy = h - padding - currentBase[1] * step;
                 ctx.fillStyle = "#10b981";
@@ -758,7 +777,6 @@
                 ctx.arc(gx, gy, 8, 0, 2 * Math.PI);
                 ctx.fill();
 
-                // Multiples
                 for (let i = 0; i < currentStepIndex; i++) {
                     const item = fullSequence[i];
                     if (!item || !item.pt) continue;
@@ -851,14 +869,12 @@
                 }, 700);
             }
 
-            // --- STATISTICAL DASHBOARD (4 Canvas Charts) ---
             function renderStats() {
                 const valid = fullSequence.filter((d) => d.pt !== null);
                 const ks = valid.map((d) => d.k);
                 const xs = valid.map((d) => d.pt[0]);
                 const ys = valid.map((d) => d.pt[1]);
 
-                // Update KPI indicators
                 document.getElementById("metricOrder").innerText =
                     fullSequence.length;
                 const rx = pearson(ks, xs);
@@ -868,7 +884,6 @@
                 document.getElementById("metricCorrY").innerText =
                     (ry >= 0 ? "+" : "") + ry.toFixed(4);
 
-                // Compute avalanche flips
                 const flips = [];
                 const flipLabels = [];
                 for (let i = 0; i < valid.length - 1; i++) {
@@ -886,20 +901,12 @@
                 document.getElementById("metricAvalanche").innerText =
                     `${(meanFlips * 10).toFixed(1)}% (${meanFlips.toFixed(2)}/10 bits)`;
 
-                // Draw Chart 1: Trajectory
                 drawTrajectoryChart(ks, xs, ys);
-
-                // Draw Chart 2: Avalanche
                 drawAvalancheChart(flipLabels, flips);
-
-                // Draw Chart 3: Bit Frequencies
                 drawBitChart(xs, ys);
-
-                // Draw Chart 4: Coordinate Frequencies
                 drawFreqChart(xs);
             }
 
-            // --- Chart 1: Trajectory ---
             function drawTrajectoryChart(ks, xs, ys) {
                 const cvs = document.getElementById("chartTrajectory");
                 const c = cvs.getContext("2d");
@@ -908,7 +915,6 @@
                     p = 32;
                 c.clearRect(0, 0, w, h);
 
-                // Grid
                 c.strokeStyle = "#e2e8f0";
                 c.lineWidth = 1;
                 c.fillStyle = "#64748b";
@@ -928,7 +934,6 @@
                     c.fillText(i, p - 14, py + 4);
                 }
 
-                // Draw X trajectory line (Blue)
                 c.strokeStyle = "#2563eb";
                 c.lineWidth = 2;
                 c.beginPath();
@@ -940,7 +945,6 @@
                 });
                 c.stroke();
 
-                // Draw Y trajectory line (Green dashed)
                 c.strokeStyle = "#10b981";
                 c.lineWidth = 2;
                 c.setLineDash([4, 4]);
@@ -954,33 +958,28 @@
                 c.stroke();
                 c.setLineDash([]);
 
-                // Draw points & labels
                 ks.forEach((k, idx) => {
                     const px = p + (k - 1) * xStep;
                     c.fillStyle = "#64748b";
                     c.fillText(k, px, h - p + 16);
 
-                    // x dot
                     c.fillStyle = "#2563eb";
                     c.beginPath();
                     c.arc(px, h - p - xs[idx] * yStep, 4, 0, Math.PI * 2);
                     c.fill();
 
-                    // y dot
                     c.fillStyle = "#10b981";
                     c.beginPath();
                     c.arc(px, h - p - ys[idx] * yStep, 4, 0, Math.PI * 2);
                     c.fill();
                 });
 
-                // Legend
                 c.fillStyle = "#2563eb";
                 c.fillText("● x-coord", w - p - 110, p - 12);
                 c.fillStyle = "#10b981";
                 c.fillText("● y-coord", w - p - 35, p - 12);
             }
 
-            // --- Chart 2: Avalanche ---
             function drawAvalancheChart(labels, flips) {
                 const cvs = document.getElementById("chartAvalanche");
                 const c = cvs.getContext("2d");
@@ -992,7 +991,6 @@
                 const barW = (w - 2 * p) / (flips.length * 1.4);
                 const step = (w - 2 * p) / flips.length;
 
-                // Grid lines for 0 to 10
                 c.strokeStyle = "#e2e8f0";
                 c.lineWidth = 1;
                 c.fillStyle = "#64748b";
@@ -1008,7 +1006,6 @@
                     c.fillText(i, p - 14, py + 4);
                 }
 
-                // 50% SAC Line (5 bits)
                 const midY = h - p - 0.5 * (h - 2 * p);
                 c.strokeStyle = "#ef4444";
                 c.lineWidth = 2;
@@ -1021,7 +1018,6 @@
                 c.fillStyle = "#ef4444";
                 c.fillText("50% SAC (5 bits)", w - p - 60, midY - 6);
 
-                // Bars
                 flips.forEach((val, i) => {
                     const bx = p + i * step + (step - barW) / 2;
                     const bH = (val / 10) * (h - 2 * p);
@@ -1036,7 +1032,6 @@
                 });
             }
 
-            // --- Chart 3: Bit Frequencies ---
             function drawBitChart(xs, ys) {
                 const cvs = document.getElementById("chartBits");
                 const c = cvs.getContext("2d");
@@ -1056,7 +1051,6 @@
                         100,
                 );
 
-                // 50% baseline
                 const y50 = h - p - 0.5 * (h - 2 * p);
                 c.strokeStyle = "#ef4444";
                 c.lineWidth = 1.5;
@@ -1076,12 +1070,10 @@
                 [0, 1, 2, 3, 4].forEach((b) => {
                     const gx = p + b * groupW;
 
-                    // x bit bar (Blue)
                     const xH = (xBits[b] / 100) * (h - 2 * p);
                     c.fillStyle = "#3b82f6";
                     c.fillRect(gx + groupW * 0.1, h - p - xH, barW, xH);
 
-                    // y bit bar (Green)
                     const yH = (yBits[b] / 100) * (h - 2 * p);
                     c.fillStyle = "#10b981";
                     c.fillRect(
@@ -1106,7 +1098,6 @@
                 c.fillText("■ y-bits", w - p - 40, p - 12);
             }
 
-            // --- Chart 4: Coordinate Frequencies ---
             function drawFreqChart(xs) {
                 const cvs = document.getElementById("chartFreq");
                 const c = cvs.getContext("2d");
@@ -1141,7 +1132,6 @@
                 }
             }
 
-            // --- Event Listeners ---
             document
                 .getElementById("btnCompute")
                 .addEventListener("click", runAll);
