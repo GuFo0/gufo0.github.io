@@ -1,0 +1,316 @@
+:root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #cbd5e1;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --green: #10b981;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --purple: #8b5cf6;
+    --badge-green-bg: #ecfdf5;
+    --badge-green-text: #065f46;
+    --badge-gray-bg: #f1f5f9;
+    --badge-gray-text: #64748b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+        sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    padding: 24px;
+    font-size: 1.05rem;
+}
+
+.container {
+    max-width: min(94vw, 1450px);
+    margin: 0 auto;
+}
+
+/* Navigation Back Link */
+.nav-back,
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease;
+}
+.nav-back:hover,
+.back-btn:hover {
+    background: #f1f5f9;
+    color: var(--primary);
+    border-color: #94a3b8;
+    transform: translateX(-2px);
+}
+
+/* Typography & Headers */
+header {
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 14px;
+}
+h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+h2 {
+    font-size: 1.4rem;
+    margin: 0 0 14px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    color: #1e293b;
+}
+h3 {
+    font-size: 1.15rem;
+    margin: 14px 0 6px 0;
+    color: #1e293b;
+}
+p,
+li {
+    font-size: 1rem;
+    color: var(--text-muted);
+}
+
+/* Cards & Grids */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+@media (max-width: 950px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+    body {
+        padding: 14px;
+    }
+}
+
+/* Form Controls & Buttons */
+.control-group {
+    margin-bottom: 16px;
+}
+label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+}
+input,
+select,
+button,
+textarea {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.98rem;
+    width: 100%;
+}
+textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+.btn-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    width: auto;
+    transition: background 0.15s;
+}
+button:hover {
+    background: var(--primary-hover);
+}
+button.secondary {
+    background: #64748b;
+}
+button.secondary:hover {
+    background: #475569;
+}
+
+/* Tables */
+.table-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    text-align: left;
+}
+th,
+td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+}
+th {
+    background: #f1f5f9;
+    position: sticky;
+    top: 0;
+    font-weight: 600;
+}
+
+/* Badges & Code Tags */
+.badge-math {
+    font-family: monospace;
+    background: #e2e8f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.math {
+    font-family: "Times New Roman", Times, serif;
+    font-style: italic;
+}
+.code-val {
+    font-family: "Fira Code", monospace;
+    font-size: 0.9rem;
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    word-break: break-all;
+    margin-top: 6px;
+    color: #0f172a;
+}
+.badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+.badge-completed {
+    background: var(--badge-green-bg);
+    color: var(--badge-green-text);
+    border: 1px solid #a7f3d0;
+}
+.badge-upcoming {
+    background: var(--badge-gray-bg);
+    color: var(--badge-gray-text);
+    border: 1px solid #e2e8f0;
+}
+
+/* Timeline (Pixel-Perfect Centered) */
+.timeline {
+    position: relative;
+    margin: 24px 0 10px 4px;
+    padding-left: 0;
+    border-left: none;
+}
+.timeline-item {
+    position: relative;
+    padding-left: 32px;
+    margin-bottom: 24px;
+}
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+.timeline-item::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 20px;
+    bottom: -8px;
+    width: 2px;
+    background: #cbd5e1;
+}
+.timeline-item:last-child::after {
+    display: none;
+}
+.timeline-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px var(--primary);
+    z-index: 1;
+}
+.timeline-date {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.timeline-title {
+    font-weight: 600;
+    margin: 2px 0 4px 0;
+    color: #1e293b;
+}
+
+/* Canvas & Legend */
+canvas {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    max-width: 100%;
+    height: auto;
+}
+.legend {
+    display: flex;
+    gap: 16px;
+    font-size: 0.88rem;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
