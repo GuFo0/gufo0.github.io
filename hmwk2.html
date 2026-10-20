@@ -3,1101 +3,1059 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HMWK 2 — Toy ECC vs. Caesar Cipher & Cryptanalysis</title>
+        <title>HMWK 2 — From Wallet Seed to Ethereum Address</title>
         <link rel="stylesheet" href="style.css" />
-        <style>
-            .cipher-box {
-                background: #fdfdfd;
-                border: 1px solid var(--border);
-                border-radius: 8px;
-                padding: 16px;
-                margin-bottom: 14px;
-            }
-            .cipher-title {
-                font-weight: 700;
-                font-size: 0.95rem;
-                margin-bottom: 6px;
-                color: #1e293b;
-                display: flex;
-                justify-content: space-between;
-            }
-            .freq-bar-container {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 3px;
-                font-size: 0.85rem;
-            }
-            .freq-letter {
-                width: 18px;
-                font-weight: 700;
-                text-align: center;
-            }
-            .freq-track {
-                flex: 1;
-                background: #f1f5f9;
-                height: 14px;
-                border-radius: 3px;
-                overflow: hidden;
-            }
-            .freq-fill-obs {
-                height: 100%;
-                background: var(--primary);
-            }
-            .freq-fill-eng {
-                height: 100%;
-                background: #94a3b8;
-            }
-        </style>
     </head>
     <body>
         <div class="container">
-            <a href="index.html" class="nav-back"
-                >&larr; Back to Portfolio Index</a
+            <a href="index.html" class="back-btn"
+                >&larr; Back to All Homeworks</a
             >
 
             <header>
-                <h1>HMWK 2 — Toy ECC vs. Caesar Cipher &amp; Cryptanalysis</h1>
+                <h1>HMWK 2 — From Wallet Seed to Ethereum Address</h1>
                 <p>
-                    Comparing Asymmetric Public-Key Encryption (secp256k1 toy
-                    curve) with Classical Substitution (Caesar Cipher),
-                    accompanied by automated statistical cryptanalysis and
-                    restricted key-space attacks.
+                    Live demonstration of key derivation, hashing, elliptic
+                    curve point multiplication, and checksum encoding.<br />
+                    Standard pipeline:
+                    <span class="badge-math"
+                        >Mnemonic &rarr; BIP-39 &rarr; BIP-32/44 &rarr;
+                        secp256k1 &rarr; Keccak-256 &rarr; EIP-55</span
+                    >
                 </p>
             </header>
 
-            <!-- Section 1: Side-by-Side Encryption & Decryption -->
-            <div class="card">
-                <h2>
-                    1. Encryption &amp; Decryption: Toy ECC vs. Caesar Cipher
-                </h2>
-                <p>
-                    Encrypt the exact same plaintext message using both
-                    algorithms:
-                </p>
+            <!-- Section 1: Live Interactive Cryptographic Pipeline -->
+            <div class="grid-2">
+                <div class="card">
+                    <h2>1. Interactive Cryptographic Pipeline</h2>
 
-                <div class="control-group">
-                    <label for="plaintextInput"
-                        >Plaintext Message (A&ndash;Z):</label
-                    >
-                    <input
-                        type="text"
-                        id="plaintextInput"
-                        value="ATTACK AT DAWN ON THE BLOCKCHAIN"
-                        style="text-transform: uppercase"
-                    />
-                </div>
-
-                <div class="grid-2">
-                    <!-- Toy ECC Box -->
-                    <div class="cipher-box">
-                        <div class="cipher-title">
-                            <span
-                                >🔒 Asymmetric Toy ECC (ECIES-style
-                                Scheme)</span
-                            >
-                            <span
-                                class="badge"
-                                style="background: #e0e7ff; color: #3730a3"
-                                >y² ≡ x³ + 7 (mod 17)</span
-                            >
-                        </div>
-                        <p style="font-size: 0.88rem; margin: 4px 0 10px 0">
-                            Base Generator
-                            <span class="badge-math">G = (6, 6)</span> [Order
-                            <i>N</i> = 18].
-                        </p>
-
-                        <div
-                            style="
-                                display: grid;
-                                grid-template-columns: 1fr 1fr;
-                                gap: 10px;
-                                margin-bottom: 10px;
-                            "
+                    <div class="control-group">
+                        <label for="mnemonicInput"
+                            >BIP-39 Mnemonic Phrase (12 Words):</label
                         >
-                            <div>
-                                <label style="font-size: 0.85rem"
-                                    >Bob's Private Key (k<sub>B</sub>):</label
-                                >
-                                <input
-                                    type="number"
-                                    id="eccPrivKey"
-                                    value="5"
-                                    min="1"
-                                    max="17"
-                                />
-                            </div>
-                            <div>
-                                <label style="font-size: 0.85rem"
-                                    >Bob's Public Key (Q<sub>B</sub> =
-                                    k<sub>B</sub>G):</label
-                                >
-                                <div
-                                    class="code-val"
-                                    id="eccPubKey"
-                                    style="margin-top: 0; padding: 8px"
-                                >
-                                    (10, 15)
-                                </div>
-                            </div>
-                        </div>
+                        <textarea id="mnemonicInput" rows="2">
+abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about</textarea>
+                    </div>
 
-                        <div class="control-group">
-                            <label style="font-size: 0.85rem"
-                                >Alice's Ephemeral Key (r):</label
+                    <div
+                        style="
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 12px;
+                            margin-bottom: 14px;
+                        "
+                    >
+                        <div>
+                            <label for="passphraseInput"
+                                >Optional Passphrase (Salt):</label
                             >
                             <input
-                                type="number"
-                                id="eccEphemeral"
-                                value="7"
-                                min="1"
-                                max="17"
+                                type="text"
+                                id="passphraseInput"
+                                placeholder="Empty by default"
                             />
                         </div>
-
-                        <button
-                            id="btnEccRun"
-                            style="width: 100%; margin-bottom: 10px"
-                        >
-                            Encrypt &amp; Decrypt with ECC
-                        </button>
-
-                        <div style="font-size: 0.88rem">
-                            <div>
-                                <strong>Ephemeral Public Key (R = rG):</strong>
-                                <span id="eccR" class="badge-math"
-                                    >(15, 4)</span
-                                >
-                            </div>
-                            <div>
-                                <strong
-                                    >Shared Secret Point (S = rQ<sub>B</sub> =
-                                    k<sub>B</sub>R):</strong
-                                >
-                                <span id="eccShared" class="badge-math"
-                                    >(6, 11)</span
-                                >
-                            </div>
-                            <div>
-                                <strong>Derived Keystream Mask:</strong>
-                                <span class="badge-math"
-                                    >S<sub>x</sub> = 6</span
-                                >
-                            </div>
-                            <div style="margin-top: 6px">
-                                <strong>Ciphertext:</strong>
-                            </div>
-                            <div class="code-val" id="eccCiphertext">--</div>
-                            <div style="margin-top: 6px">
-                                <strong>Bob's Decrypted Message:</strong>
-                            </div>
-                            <div
-                                class="code-val"
-                                id="eccDecrypted"
-                                style="color: #065f46; background: #ecfdf5"
+                        <div>
+                            <label for="derivationPath"
+                                >BIP-44 Derivation Path:</label
                             >
-                                --
-                            </div>
+                            <input
+                                type="text"
+                                id="derivationPath"
+                                value="m/44'/60'/0'/0/0"
+                            />
                         </div>
                     </div>
 
-                    <!-- Caesar Cipher Box -->
-                    <div class="cipher-box">
-                        <div class="cipher-title">
-                            <span>🏛️ Classical Caesar Cipher</span>
-                            <span
-                                class="badge"
-                                style="background: #fef3c7; color: #92400e"
-                                >Symmetric Substitution</span
-                            >
-                        </div>
-                        <p style="font-size: 0.88rem; margin: 4px 0 10px 0">
-                            Modulo 26 shift:
+                    <div class="btn-group" style="margin-bottom: 18px">
+                        <button id="btnDerive">Derive Full Pipeline</button>
+                        <button id="btnRandom" class="secondary">
+                            Generate Random 12-Word
+                        </button>
+                        <button id="btnStandard" class="secondary">
+                            Reset to Test Vector
+                        </button>
+                    </div>
+
+                    <!-- Pipeline Step 1 -->
+                    <div class="pipe-step">
+                        <span class="pipe-badge badge-bip39"
+                            >Step 1 &bull; BIP-39 (Mnemonic &rarr; 512-bit
+                            Seed)</span
+                        >
+                        <p style="margin: 0; font-size: 0.9rem">
+                            PBKDF2-HMAC-SHA512 (2048 iterations) with salt
                             <span class="badge-math"
-                                >C<sub>i</sub> ≡ M<sub>i</sub> + k (mod
-                                26)</span
-                            >.
+                                >"mnemonic" + passphrase</span
+                            >:
                         </p>
-
-                        <div class="control-group">
-                            <label style="font-size: 0.85rem"
-                                >Symmetric Shift Key (k &isin; [0..25]):</label
-                            >
-                            <input
-                                type="number"
-                                id="caesarShift"
-                                value="3"
-                                min="0"
-                                max="25"
-                            />
-                        </div>
-
-                        <button
-                            id="btnCaesarRun"
-                            class="secondary"
-                            style="width: 100%; margin-bottom: 10px"
-                        >
-                            Encrypt &amp; Decrypt with Caesar
-                        </button>
-
-                        <div style="font-size: 0.88rem">
-                            <div>
-                                <strong>Key Space:</strong>
-                                <span class="badge-math">26 possible keys</span>
-                            </div>
-                            <div>
-                                <strong>Shared Secret:</strong> Both parties
-                                must agree on
-                                <span class="badge-math">k</span> in advance.
-                            </div>
-                            <div style="margin-top: 20px">
-                                <strong>Caesar Ciphertext:</strong>
-                            </div>
-                            <div class="code-val" id="caesarCiphertext">--</div>
-                            <div style="margin-top: 6px">
-                                <strong>Decrypted Message:</strong>
-                            </div>
-                            <div
-                                class="code-val"
-                                id="caesarDecrypted"
-                                style="color: #065f46; background: #ecfdf5"
-                            >
-                                --
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 2: Statistical Cryptanalysis of the Caesar Cipher -->
-            <div class="card">
-                <h2>2. Statistical Cryptanalysis of the Caesar Cipher</h2>
-                <p>
-                    The Caesar cipher preserves the underlying frequency
-                    distribution of letters. Given English text, we recover the
-                    secret key by minimizing the
-                    <strong>Chi-Squared (&chi;&sup2;) statistic</strong> against
-                    the standard English frequency corpus:
-                    <span class="badge-math"
-                        >&chi;&sup2; = &sum; (O<sub>i</sub> &minus;
-                        E<sub>i</sub>)&sup2; / E<sub>i</sub></span
-                    >.
-                </p>
-
-                <div class="grid-2">
-                    <div>
-                        <label for="crackInput">Ciphertext to Crack:</label>
-                        <textarea id="crackInput" rows="3">
-DWWDFN DW GDZQ RQ WKH EORFNFKDLQ</textarea>
-
-                        <div class="btn-group" style="margin-bottom: 14px">
-                            <button id="btnCrack">
-                                Perform Statistical Attack (&chi;&sup2;)
-                            </button>
-                            <button id="btnShortTest" class="secondary">
-                                Load Short Sample (14 chars)
-                            </button>
-                            <button id="btnLongTest" class="secondary">
-                                Load Long Sample (220 chars)
-                            </button>
-                        </div>
-
-                        <div
-                            class="cipher-box"
-                            id="crackResultBox"
-                            style="background: #f8fafc"
-                        >
-                            <div>
-                                <strong>Recovered Shift Key (k):</strong>
-                                <span
-                                    id="crackedKey"
-                                    style="
-                                        font-weight: 700;
-                                        color: var(--primary);
-                                        font-size: 1.1rem;
-                                    "
-                                    >--</span
-                                >
-                            </div>
-                            <div>
-                                <strong>Minimum &chi;&sup2; Score:</strong>
-                                <span id="crackedChi" class="badge-math"
-                                    >--</span
-                                >
-                            </div>
-                            <div style="margin-top: 8px">
-                                <strong>Recovered Plaintext:</strong>
-                            </div>
-                            <div
-                                class="code-val"
-                                id="crackedPlaintext"
-                                style="
-                                    color: #065f46;
-                                    background: #ecfdf5;
-                                    font-weight: 600;
-                                "
-                            >
-                                --
-                            </div>
-                        </div>
-
-                        <!-- Sample Length Benchmark -->
-                        <h3 style="margin-top: 16px">
-                            Effectiveness vs. Ciphertext Length:
-                        </h3>
-                        <table style="font-size: 0.88rem">
-                            <thead>
-                                <tr>
-                                    <th>Length</th>
-                                    <th>Attack Accuracy</th>
-                                    <th>Reason / Statistical Vulnerability</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>&lt; 25 chars</strong></td>
-                                    <td
-                                        style="
-                                            color: var(--amber);
-                                            font-weight: 600;
-                                        "
-                                    >
-                                        Unreliable (&approx; 40&ndash;60%)
-                                    </td>
-                                    <td>
-                                        Small sample size: noise dominates;
-                                        standard 'E' or 'T' may not be the most
-                                        frequent.
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>50&ndash;100 chars</strong></td>
-                                    <td
-                                        style="
-                                            color: var(--green);
-                                            font-weight: 600;
-                                        "
-                                    >
-                                        High (&approx; 85&ndash;95%)
-                                    </td>
-                                    <td>
-                                        Law of large numbers starts evening out
-                                        letter distributions toward English
-                                        norms.
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>&gt; 200 chars</strong></td>
-                                    <td
-                                        style="
-                                            color: var(--green);
-                                            font-weight: 700;
-                                        "
-                                    >
-                                        Virtually 100%
-                                    </td>
-                                    <td>
-                                        Chi-squared statistic unequivocally
-                                        identifies the shift with zero
-                                        ambiguity.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="code-val" id="outSeed">Calculating...</div>
                     </div>
 
-                    <div>
-                        <h3>Live Letter Frequency Analysis:</h3>
-                        <p style="font-size: 0.85rem; margin-bottom: 8px">
-                            Blue bars = Observed in Ciphertext | Gray bars =
-                            Standard English Expected.
+                    <!-- Pipeline Step 2 -->
+                    <div class="pipe-step">
+                        <span class="pipe-badge badge-bip32"
+                            >Step 2 &bull; BIP-32 / BIP-44 (Hierarchical
+                            Deterministic Derivation)</span
+                        >
+                        <p style="margin: 0; font-size: 0.9rem">
+                            Child Key Derivation along path
+                            <strong id="outPathLabel">m/44'/60'/0'/0/0</strong>
+                            (Ethereum Coin Type: 60'):
+                        </p>
+                        <div class="code-val" id="outPrivKey">
+                            Calculating...
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Step 3 -->
+                    <div class="pipe-step">
+                        <span class="pipe-badge badge-secp"
+                            >Step 3 &bull; secp256k1 (Public-Key
+                            Cryptography)</span
+                        >
+                        <p style="margin: 0; font-size: 0.9rem">
+                            Elliptic-curve scalar multiplication:
+                            <span class="math">Q = k &middot; G</span> (64-byte
+                            uncompressed coordinate):
+                        </p>
+                        <div class="code-val" id="outPubKey">
+                            Calculating...
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Step 4 -->
+                    <div class="pipe-step">
+                        <span class="pipe-badge badge-keccak"
+                            >Step 4 &bull; Keccak-256 (Hashing &rarr; Raw
+                            Address)</span
+                        >
+                        <p style="margin: 0; font-size: 0.9rem">
+                            Keccak-256 hash of public key, discarding first 12
+                            bytes &rarr;
+                            <strong>Last 20 bytes (40 hex chars)</strong>:
+                        </p>
+                        <div class="code-val" id="outRawAddr">
+                            Calculating...
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Step 5 -->
+                    <div class="pipe-step">
+                        <span class="pipe-badge badge-eip55"
+                            >Step 5 &bull; EIP-55 (Mixed-Case Checksummed
+                            Address)</span
+                        >
+                        <p style="margin: 0; font-size: 0.9rem">
+                            Letters
+                            <span class="math">a&ndash;f</span> capitalized if
+                            corresponding Keccak-256 hash nibble
+                            <span class="math">&ge; 8</span>:
                         </p>
                         <div
-                            id="freqChartContainer"
+                            class="code-val"
+                            id="outCheckAddr"
                             style="
-                                max-height: 380px;
-                                overflow-y: auto;
-                                padding-right: 6px;
-                            "
-                        >
-                            <!-- Dynamically populated -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 3: Attacking the Toy ECC Scheme -->
-            <div class="card">
-                <h2>
-                    3. Cryptanalysis of the Toy ECC Scheme (Restricted Key Space
-                    Attack)
-                </h2>
-                <p>
-                    In Part 1, we restricted the private key to
-                    <span class="math">k &isin; [1, 18]</span> to make manual
-                    calculations feasible. Below is an automated brute-force
-                    solver that solves the
-                    <strong
-                        >Elliptic Curve Discrete Logarithm Problem
-                        (ECDLP)</strong
-                    >
-                    by testing scalar multiples until
-                    <span class="math">k &middot; G = Q<sub>B</sub></span
-                    >:
-                </p>
-
-                <div class="grid-2">
-                    <div>
-                        <label
-                            >Intercepted Bob's Public Key
-                            (Q<sub>B</sub>):</label
-                        >
-                        <div class="code-val" id="targetPubKeyDisplay">
-                            (10, 15)
-                        </div>
-                        <button
-                            id="btnAttackEcc"
-                            style="margin-top: 12px; width: 100%"
-                        >
-                            Execute ECDLP Exhaustive Search Attack
-                        </button>
-
-                        <div
-                            class="cipher-box"
-                            id="eccAttackResult"
-                            style="
-                                margin-top: 14px;
-                                display: none;
+                                font-weight: 700;
+                                color: #065f46;
                                 background: #ecfdf5;
                                 border-color: #a7f3d0;
+                                font-size: 1.05rem;
                             "
                         >
-                            <div style="font-weight: 700; color: #065f46">
-                                Target Broken Successfully!
-                            </div>
-                            <div>
-                                Recovered Private Key:
-                                <span
-                                    id="recoveredPrivKey"
-                                    class="badge-math"
-                                    style="font-size: 1.1rem; font-weight: 700"
-                                    >--</span
-                                >
-                            </div>
-                            <div>
-                                Steps Required:
-                                <span id="attackSteps" class="badge-math"
-                                    >--</span
-                                >
-                                / 18 scalar additions
-                            </div>
-                            <div style="margin-top: 6px">
-                                Decrypted Plaintext using recovered key:
-                            </div>
-                            <div class="code-val" id="attackDecryptedText">
-                                --
-                            </div>
+                            Calculating...
                         </div>
                     </div>
+                </div>
 
-                    <div>
-                        <h3>ECDLP Attack Log:</h3>
-                        <div class="table-container" style="max-height: 220px">
-                            <table id="attackLogTable">
-                                <thead>
-                                    <tr>
-                                        <th>Test k</th>
-                                        <th>Computed k &middot; G</th>
-                                        <th>Target Match?</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="attackLogBody">
-                                    <tr>
-                                        <td
-                                            colspan="3"
-                                            style="
-                                                color: #64748b;
-                                                text-align: center;
-                                            "
-                                        >
-                                            Click "Execute" to run attack.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <!-- Right Column: Interactive Typo Verifier & Address Analysis -->
+                <div>
+                    <div class="card">
+                        <h2>2. EIP-55 Checksum Typo Verifier</h2>
+                        <p>
+                            Test how wallets (MetaMask, Rabby, Rainbow) detect
+                            transcription typos.
+                            <strong>Edit any single letter or number</strong>
+                            below to watch the checksum flag the corruption:
+                        </p>
+
+                        <label for="typoInput">Address to Test:</label>
+                        <input
+                            type="text"
+                            id="typoInput"
+                            style="
+                                font-family: monospace;
+                                font-size: 1.05rem;
+                                font-weight: 600;
+                            "
+                        />
+
+                        <div
+                            id="typoResult"
+                            style="
+                                margin-top: 14px;
+                                padding: 14px;
+                                border-radius: 8px;
+                                font-weight: 600;
+                            "
+                        >
+                            Checking...
                         </div>
+
+                        <p style="font-size: 0.88rem; margin-top: 12px">
+                            <strong>Why this matters:</strong> Ethereum
+                            addresses have no native prefix or length parity.
+                            Before EIP-55 (2016), sending funds to a mistyped
+                            address permanently destroyed the coins. EIP-55
+                            provides a
+                            <strong>99.998% error-detection rate</strong> with
+                            zero blockchain protocol overhead.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <h2>3. Address Statistical Properties</h2>
+                        <p>
+                            Hexadecimal nibble distribution (<span class="math"
+                                >0&ndash;9, a&ndash;f</span
+                            >) for the derived address:
+                        </p>
+                        <canvas
+                            id="addrHistCanvas"
+                            width="450"
+                            height="200"
+                        ></canvas>
+                        <table style="margin-top: 14px; font-size: 0.88rem">
+                            <tr>
+                                <td><strong>Total Hex Nibbles:</strong></td>
+                                <td>40 nibbles (160 bits)</td>
+                                <td><strong>Expected Uniformity:</strong></td>
+                                <td>&approx; 2.5 per nibble (6.25%)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alphabetic Letters:</strong></td>
+                                <td id="statAlphaCount">--</td>
+                                <td>
+                                    <strong
+                                        >EIP-55 Capitalization Ratio:</strong
+                                    >
+                                </td>
+                                <td id="statCapRatio">
+                                    -- (Expected &approx; 50%)
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 4: Theoretical Discussion & Homework Questions -->
+            <!-- Section 4: Conceptual Foundations -->
             <div class="card">
-                <h2>4. Theoretical Discussion &amp; Homework Questions</h2>
-                <div
-                    style="font-size: 0.96rem; color: #334155; line-height: 1.7"
-                >
-                    <h3>1. Comparison: Toy ECC Scheme vs. Caesar Cipher</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Property</th>
-                                <th>Toy ECC (ECIES / ElGamal)</th>
-                                <th>Caesar Cipher</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Cryptography Type</strong></td>
-                                <td>
-                                    <strong>Asymmetric (Public-Key):</strong>
-                                    Separate encryption key (<span class="math"
-                                        >Q<sub>B</sub></span
-                                    >) and decryption key (<span class="math"
-                                        >k<sub>B</sub></span
-                                    >).
-                                </td>
-                                <td>
-                                    <strong>Symmetric:</strong> Single secret
-                                    shift key (<span class="math">k</span>)
-                                    shared by both sender and receiver.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Key Space Size</strong></td>
-                                <td>
-                                    Group order of the curve:
-                                    <span class="math">N = 18</span> (Toy) vs.
-                                    <span class="math"
-                                        >&approx; 2<sup>256</sup></span
-                                    >
-                                    (Real secp256k1).
-                                </td>
-                                <td>
-                                    Modulo 26: exactly
-                                    <span class="math">26</span> possible keys
-                                    (<span class="math"
-                                        >k &isin; {0, \dots, 25}</span
-                                    >).
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Mathematical Procedure</strong></td>
-                                <td>
-                                    Non-linear group scalar multiplication over
-                                    finite field (<span class="math"
-                                        >Q = kG</span
-                                    >), followed by Diffie-Hellman mask
-                                    addition.
-                                </td>
-                                <td>
-                                    Linear monoalphabetic substitution: each
-                                    letter
-                                    <span class="math"
-                                        >x &rarr; (x + k) \bmod 26</span
-                                    >.
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Statistical Properties</strong></td>
-                                <td>
-                                    <strong
-                                        >Eliminates letter frequencies</strong
-                                    >
-                                    when paired with ephemeral keys (<span
-                                        class="math"
-                                        >r</span
-                                    >
-                                    changes per message).
-                                </td>
-                                <td>
-                                    <strong
-                                        >Completely preserves letter
-                                        frequencies:</strong
-                                    >
-                                    The ciphertext is simply a shifted copy of
-                                    the plaintext distribution.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <h2>
+                    4. Conceptual Foundations: Taxonomy of Cryptographic
+                    Primitives
+                </h2>
+                <p>
+                    To understand the Ethereum wallet architecture, we must
+                    distinguish between five fundamentally different
+                    mathematical concepts:
+                </p>
 
-                    <h3>
-                        2. Statistical Attack (Caesar) vs. Algebraic Attack (Toy
-                        ECC)
-                    </h3>
-                    <p>
-                        &bull;
-                        <strong
-                            >The Caesar Attack is Empirical &amp;
-                            Language-Dependent:</strong
-                        >
-                        It requires redundancy in the plaintext (English
-                        language rules) and a sufficiently large sample size. If
-                        the plaintext is random bytes or compressed data,
-                        statistical cryptanalysis fails completely.<br />
-                        &bull;
-                        <strong
-                            >The Toy ECC Attack is Purely Algebraic &amp;
-                            Exact:</strong
-                        >
-                        It exploits the mathematical definition of the group. It
-                        does not require any prior knowledge of the message,
-                        language, or sample size. The attacker tests integers
-                        <span class="math">k = 1, 2, \dots</span> until
-                        <span class="math">kG = Q<sub>B</sub></span
-                        >.
-                    </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Representative Standard</th>
+                            <th>Mathematical Purpose</th>
+                            <th>Reversibility &amp; Security</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Key Generation</strong></td>
+                            <td>CSPRNG (OS Entropy)</td>
+                            <td>
+                                Generates true, uncorrelated cryptographic
+                                randomness (128&ndash;256 bits).
+                            </td>
+                            <td>
+                                Non-deterministic; requires hardware/OS noise.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Key Derivation</strong></td>
+                            <td>BIP-32 / BIP-44 (HMAC-SHA512)</td>
+                            <td>
+                                Expands one single seed deterministically into
+                                an infinite tree of child keys.
+                            </td>
+                            <td>
+                                Deterministic pseudo-random expansion;
+                                irreversible without parent key.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Public-Key Crypto</strong></td>
+                            <td>secp256k1 (ECDSA)</td>
+                            <td>
+                                Asymmetric one-way trapdoor function (<span
+                                    class="math"
+                                    >Q = kG</span
+                                >) enabling digital signatures.
+                            </td>
+                            <td>
+                                Forward is trivial; inverse (ECDLP) is
+                                computationally impossible.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hashing</strong></td>
+                            <td>Keccak-256</td>
+                            <td>
+                                Fixed-size compression (maps arbitrary input to
+                                uniform 256-bit output).
+                            </td>
+                            <td>
+                                Strictly one-way, non-algebraic, collision &amp;
+                                pre-image resistant.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Checksums</strong></td>
+                            <td>EIP-55 (Mixed-Case)</td>
+                            <td>
+                                Error-detecting code designed to catch human
+                                typos and transcription errors.
+                            </td>
+                            <td>
+                                Not designed to resist malicious attackers;
+                                targets accidental bit flips.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Encoding</strong></td>
+                            <td>
+                                Hexadecimal (<span class="badge-math"
+                                    >0x...</span
+                                >)
+                            </td>
+                            <td>
+                                Transforms raw binary bytes into a
+                                human-readable text format.
+                            </td>
+                            <td>
+                                100% reversible; provides zero cryptographic
+                                security.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                    <h3>3. Why the Attack Fails on Real-World secp256k1</h3>
-                    <p>
-                        In Ethereum's production
-                        <strong>secp256k1</strong> curve: $$\text{Key Space } N
-                        \approx 2^{256} \approx 1.15 \times 10^{77}$$ Even using
-                        Pollard’s Rho algorithm (which finds discrete logs in
-                        <span class="math">O(\sqrt{N})</span> operations),
-                        cracking the private key requires
-                        <span class="math"
-                            >2^{128} \approx 3.4 \times 10^{38}</span
-                        >
-                        operations. If all supercomputers on Earth performed one
-                        billion scalar multiplications per second, it would
-                        still take over <span class="math">10^{21}</span> years
-                        (millions of times the age of the universe) to crack a
-                        single private key.
-                    </p>
+            <!-- Section 5: Temporal and Historical Context -->
+            <div class="card">
+                <h2>5. Temporal and Historical Context</h2>
+                <p>
+                    The cryptographic tools used by Ethereum were not invented
+                    at the same time. They represent nearly 40 years of evolving
+                    cryptographic research:
+                </p>
 
-                    <h3>
-                        4. Weaknesses: Restricted Key Space vs. Toy Scheme
-                        Design
-                    </h3>
-                    <p>
-                        &bull;
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            1977 &bull; RSA Algorithm
+                        </div>
+                        <div class="timeline-title">
+                            First Practical Public-Key Cryptography (Rivest,
+                            Shamir, Adleman)
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Introduced the revolution of asymmetric cryptography
+                            based on the hardness of factoring large composite
+                            primes.
+                        </p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            2001 &bull; SHA-2 (SHA-512)
+                        </div>
+                        <div class="timeline-title">
+                            NIST FIPS 180-2 Standard
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Standardized the Merkle-Damg&aring;rd hash family.
+                            SHA-512 is used today inside BIP-39 (PBKDF2) and
+                            BIP-32 (HMAC).
+                        </p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2012 &bull; BIP-32</div>
+                        <div class="timeline-title">
+                            Hierarchical Deterministic (HD) Wallets (Pieter
+                            Wuille)
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Eliminated the danger of backing up every new
+                            private key individually by introducing master seed
+                            derivation trees.
+                        </p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2013 &bull; BIP-39</div>
+                        <div class="timeline-title">
+                            Mnemonic Words for Deterministic Wallets (Marek
+                            Palatinus et al.)
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Solved human usability by encoding raw binary
+                            entropy into 12 or 24 human-readable dictionary
+                            words with checksum verification.
+                        </p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2014 &bull; BIP-44</div>
+                        <div class="timeline-title">
+                            Multi-Account Hierarchy Standard (Palatinus, Rusnak)
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Standardized the path
+                            <span class="badge-math"
+                                >m / purpose' / coin_type' / account' / change /
+                                address_index</span
+                            >, assigning coin type <strong>60'</strong> to
+                            Ethereum.
+                        </p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">
+                            2015 &bull; SHA-3 (NIST FIPS 202)
+                        </div>
+                        <div class="timeline-title">
+                            Standardization of Keccak Sponge Construction
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Standardized the sponge function designed by
+                            Bertoni, Daemen, Peeters, and Van Assche after the
+                            NIST competition.
+                        </p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-date">2016 &bull; EIP-55</div>
+                        <div class="timeline-title">
+                            Mixed-Case Checksum Address Encoding (Vitalik
+                            Buterin)
+                        </div>
+                        <p style="margin: 0; font-size: 0.92rem">
+                            Added checksum protection to Ethereum addresses by
+                            capitalizing letters based on Keccak-256,
+                            maintaining 100% backwards compatibility with legacy
+                            hex parsers.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 6: Technical Distinctions & Why Multiple Primitives -->
+            <div class="grid-2">
+                <div class="card">
+                    <h2>6. SHA-2 vs. Keccak-256 vs. NIST SHA-3</h2>
+                    <p style="font-size: 0.95rem">
                         <strong
-                            >Vulnerability from Restricted Key Space:</strong
-                        >
-                        A key space of <span class="math">N = 18</span> is
-                        trivial to exhaust. An adversary can test all 18 keys in
-                        less than 1 millisecond.<br />
-                        &bull;
-                        <strong
-                            >Vulnerabilities in the Toy Design Itself:</strong
-                        >
-                        <br />1.
-                        <em
-                            >Lack of Authenticated Encryption
-                            (Malleability):</em
-                        >
-                        Our toy scheme does not include a Message Authentication
-                        Code (MAC) or AEAD wrapper. An active attacker can
-                        tamper with ciphertext bits in transit. <br />2.
-                        <em>Small Field Wrap-Around:</em> Because
-                        <span class="math">p = 17</span>, shared secret
-                        coordinates <span class="math">S_x</span> take values in
-                        <span class="math">[0, 16]</span>, which is smaller than
-                        the 26-letter English alphabet, introducing modular
-                        modulo-bias if used as a raw Caesar shift.
+                            >1. Merkle-Damg&aring;rd vs. Sponge
+                            Construction:</strong
+                        ><br />
+                        SHA-2 uses Merkle-Damg&aring;rd compression, which is
+                        vulnerable to <em>length-extension attacks</em>. Keccak
+                        uses an innovative
+                        <strong>Sponge Construction</strong> that absorbs data
+                        into a state and squeezes it out, entirely preventing
+                        length-extension.
                     </p>
+                    <p style="font-size: 0.95rem">
+                        <strong
+                            >2. Why Ethereum's Keccak-256 is NOT identical to
+                            NIST SHA3-256:</strong
+                        ><br />
+                        In 2014, Ethereum adopted Keccak-256 as submitted to the
+                        NIST competition with padding byte
+                        <span class="badge-math">0x01</span>. In 2015, when NIST
+                        finalized FIPS 202, they changed the domain separation
+                        padding byte to <span class="badge-math">0x06</span>.
+                        Thus: <br />&bull;
+                        <span class="badge-math"
+                            >Keccak-256("") = c5d2460186...</span
+                        >
+                        (Used in Ethereum) <br />&bull;
+                        <span class="badge-math"
+                            >SHA3-256("") = a7ffc6f8bf...</span
+                        >
+                        (NIST Standard) <br />Ethereum maintains original
+                        Keccak-256 for consensus consistency.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h2>7. Why Multiple Primitives Instead of One?</h2>
+                    <p style="font-size: 0.95rem">
+                        <strong
+                            >The Principle of Cryptographic Separation of
+                            Concerns:</strong
+                        ><br />
+                        No single algorithm can simultaneously solve backup
+                        usability, non-repudiation signatures, address
+                        compression, and typo detection:
+                    </p>
+                    <ul style="font-size: 0.93rem; padding-left: 20px">
+                        <li>
+                            <strong>BIP-39 / BIP-32 / BIP-44:</strong> Solves
+                            <em>human error and key backup</em>. One 12-word
+                            seed recovers all accounts across multiple
+                            blockchains.
+                        </li>
+                        <li>
+                            <strong>secp256k1:</strong> Solves
+                            <em>identity and authorization</em>. Digital
+                            signatures (ECDSA) require asymmetric algebra (<span
+                                class="math"
+                                >Q = kG</span
+                            >) that cannot be performed by hash functions.
+                        </li>
+                        <li>
+                            <strong>Keccak-256:</strong> Solves
+                            <em>compression and privacy</em>. Compressing a
+                            64-byte public key to a 20-byte address saves
+                            precious blockchain state storage.
+                        </li>
+                        <li>
+                            <strong>EIP-55:</strong> Solves <em>safety</em>.
+                            Protects human operators from copy-paste truncation
+                            and transcription errors without modifying EVM
+                            consensus rules.
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
 
         <script>
-            // --- Modulo 17 Elliptic Curve Engine ---
-            const P = 17;
-            const G = [6, 6]; // Generator of order 18 on y^2 = x^3 + 7 (mod 17)
-            const ORDER = 18;
-
-            function mod(n, m = P) {
-                return ((n % m) + m) % m;
-            }
-
-            function modInv(a, m = P) {
-                a = mod(a, m);
-                if (a === 0) return 0;
-                let res = 1,
-                    base = a,
-                    exp = m - 2;
-                while (exp > 0) {
-                    if (exp % 2 === 1) res = (res * base) % m;
-                    base = (base * base) % m;
-                    exp = Math.floor(exp / 2);
-                }
-                return res;
-            }
-
-            function ecAdd(pt1, pt2) {
-                if (!pt1) return pt2;
-                if (!pt2) return pt1;
-                const [x1, y1] = pt1;
-                const [x2, y2] = pt2;
-                if (x1 === x2 && mod(y1 + y2) === 0) return null;
-                let lambda;
-                if (x1 === x2 && y1 === y2) {
-                    if (y1 === 0) return null;
-                    lambda = mod(mod(3 * x1 * x1) * modInv(2 * y1));
+            // ==========================================
+            // 1. PURE JS KECCAK-256 IMPLEMENTATION
+            // ==========================================
+            function keccak256(data) {
+                let bytes;
+                if (typeof data === "string") {
+                    bytes = new TextEncoder().encode(data);
                 } else {
-                    lambda = mod(mod(y2 - y1) * modInv(x2 - x1));
+                    bytes = data;
                 }
-                const x3 = mod(lambda * lambda - x1 - x2);
-                const y3 = mod(lambda * (x1 - x3) - y1);
+
+                const RC = [
+                    0x0000000000000001n,
+                    0x0000000000008082n,
+                    0x800000000000808an,
+                    0x8000000080008000n,
+                    0x000000000000808bn,
+                    0x0000000080000001n,
+                    0x8000000080008081n,
+                    0x8000000000008009n,
+                    0x000000000000008an,
+                    0x0000000000000088n,
+                    0x0000000080008009n,
+                    0x000000008000000an,
+                    0x000000008000808bn,
+                    0x800000000000008bn,
+                    0x8000000000008089n,
+                    0x8000000000008003n,
+                    0x8000000000008002n,
+                    0x8000000000000080n,
+                    0x000000000000800an,
+                    0x800000008000000an,
+                    0x8000000080008081n,
+                    0x8000000000008080n,
+                    0x0000000080000001n,
+                    0x8000000080008008n,
+                ];
+
+                const r = 136;
+                const rateWords = 17;
+                const state = new BigUint64Array(25);
+
+                const padded = [];
+                for (let i = 0; i < bytes.length; i++) padded.push(bytes[i]);
+                padded.push(0x01);
+                while (padded.length % r !== r - 1) padded.push(0x00);
+                padded.push(0x80);
+
+                const u8Padded = new Uint8Array(padded);
+
+                for (let b = 0; b < u8Padded.length; b += r) {
+                    const block = u8Padded.subarray(b, b + r);
+                    const view = new DataView(
+                        block.buffer,
+                        block.byteOffset,
+                        block.byteLength,
+                    );
+                    for (let i = 0; i < rateWords; i++) {
+                        state[i] ^= view.getBigUint64(i * 8, true);
+                    }
+
+                    for (let round = 0; round < 24; round++) {
+                        const C = new BigUint64Array(5);
+                        for (let x = 0; x < 5; x++) {
+                            C[x] =
+                                state[x] ^
+                                state[x + 5] ^
+                                state[x + 10] ^
+                                state[x + 15] ^
+                                state[x + 20];
+                        }
+                        const D = new BigUint64Array(5);
+                        for (let x = 0; x < 5; x++) {
+                            const rot =
+                                ((C[(x + 1) % 5] << 1n) |
+                                    (C[(x + 1) % 5] >> 63n)) &
+                                0xffffffffffffffffn;
+                            D[x] = C[(x + 4) % 5] ^ rot;
+                        }
+                        for (let i = 0; i < 25; i++) {
+                            state[i] ^= D[i % 5];
+                        }
+
+                        const rotTable = [
+                            0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25,
+                            39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14,
+                        ];
+                        const B = new BigUint64Array(25);
+                        for (let x = 0; x < 5; x++) {
+                            for (let y = 0; y < 5; y++) {
+                                const idx = x + 5 * y;
+                                const rot = BigInt(rotTable[idx]);
+                                const val = state[idx];
+                                const rotated =
+                                    rot === 0n
+                                        ? val
+                                        : ((val << rot) |
+                                              (val >> (64n - rot))) &
+                                          0xffffffffffffffffn;
+                                const newIdx = y + 5 * ((2 * x + 3 * y) % 5);
+                                B[newIdx] = rotated;
+                            }
+                        }
+
+                        for (let x = 0; x < 5; x++) {
+                            for (let y = 0; y < 5; y++) {
+                                state[x + 5 * y] =
+                                    B[x + 5 * y] ^
+                                    (~B[((x + 1) % 5) + 5 * y] &
+                                        B[((x + 2) % 5) + 5 * y]);
+                            }
+                        }
+
+                        state[0] ^= RC[round];
+                    }
+                }
+
+                const out = new Uint8Array(32);
+                const outView = new DataView(out.buffer);
+                for (let i = 0; i < 4; i++) {
+                    outView.setBigUint64(i * 8, state[i], true);
+                }
+                return out;
+            }
+
+            function bytesToHex(bytes) {
+                return Array.from(bytes)
+                    .map((b) => b.toString(16).padStart(2, "0"))
+                    .join("");
+            }
+
+            function hexToBytes(hex) {
+                hex = hex.replace(/^0x/, "");
+                const bytes = new Uint8Array(hex.length / 2);
+                for (let i = 0; i < bytes.length; i++) {
+                    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+                }
+                return bytes;
+            }
+
+            // ==========================================
+            // 2. EIP-55 CHECKSUM IMPLEMENTATION
+            // ==========================================
+            function toChecksumAddress(addrStr) {
+                const clean = addrStr.toLowerCase().replace(/^0x/, "");
+                const hashHex = bytesToHex(keccak256(clean));
+                let checksummed = "0x";
+                for (let i = 0; i < clean.length; i++) {
+                    const ch = clean[i];
+                    if (/[0-9]/.test(ch)) {
+                        checksummed += ch;
+                    } else {
+                        const hashNibble = parseInt(hashHex[i], 16);
+                        checksummed +=
+                            hashNibble >= 8
+                                ? ch.toUpperCase()
+                                : ch.toLowerCase();
+                    }
+                }
+                return checksummed;
+            }
+
+            function verifyEIP55(addrStr) {
+                if (!/^0x[0-9a-fA-F]{40}$/.test(addrStr)) {
+                    return {
+                        valid: false,
+                        reason: "Invalid format (must be 0x followed by 40 hex digits)",
+                    };
+                }
+                const expected = toChecksumAddress(addrStr);
+                if (addrStr === expected) {
+                    return { valid: true, expected };
+                } else {
+                    return {
+                        valid: false,
+                        reason: "Checksum mismatch (corrupted typo detected)",
+                        expected,
+                    };
+                }
+            }
+
+            // ==========================================
+            // 3. secp256k1 POINT MULTIPLICATION (BigInt)
+            // ==========================================
+            const SECP_P =
+                0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+            const SECP_N =
+                0xfffffffffffffffffffffffffffffffebaaedce6af48a03bb5d576e7357a4501n;
+            const SECP_Gx =
+                0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798n;
+            const SECP_Gy =
+                0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8n;
+
+            function modP(n) {
+                const r = n % SECP_P;
+                return r < 0n ? r + SECP_P : r;
+            }
+
+            function modInvP(a) {
+                let [m0, y, x] = [SECP_P, 0n, 1n];
+                if (SECP_P === 1n) return 0n;
+                while (a > 1n) {
+                    const q = a / m0;
+                    [a, m0] = [m0, a % m0];
+                    [x, y] = [y, x - q * y];
+                }
+                return x < 0n ? x + SECP_P : x;
+            }
+
+            function ecAdd(P1, P2) {
+                if (!P1) return P2;
+                if (!P2) return P1;
+                const [x1, y1] = P1;
+                const [x2, y2] = P2;
+                if (x1 === x2 && (y1 + y2) % SECP_P === 0n) return null;
+                let lam;
+                if (x1 === x2 && y1 === y2) {
+                    lam = modP(3n * x1 * x1 * modInvP(2n * y1));
+                } else {
+                    lam = modP((y2 - y1) * modInvP(x2 - x1));
+                }
+                const x3 = modP(lam * lam - x1 - x2);
+                const y3 = modP(lam * (x1 - x3) - y1);
                 return [x3, y3];
             }
 
-            function ecMul(k, pt = G) {
+            function ecMul(k, pt = [SECP_Gx, SECP_Gy]) {
                 let R = null;
                 let B = pt;
-                let curK = k % ORDER;
-                while (curK > 0) {
-                    if (curK & 1) R = ecAdd(R, B);
+                let curK = BigInt(k);
+                while (curK > 0n) {
+                    if (curK & 1n) R = ecAdd(R, B);
                     B = ecAdd(B, B);
-                    curK >>= 1;
+                    curK >>= 1n;
                 }
                 return R;
             }
 
-            // --- Standard English Letter Frequencies (%) ---
-            const ENG_FREQ = {
-                A: 8.2,
-                B: 1.5,
-                C: 2.8,
-                D: 4.3,
-                E: 12.7,
-                F: 2.2,
-                G: 2.0,
-                H: 6.1,
-                I: 7.0,
-                J: 0.15,
-                K: 0.77,
-                L: 4.0,
-                M: 2.4,
-                N: 6.7,
-                O: 7.5,
-                P: 1.9,
-                Q: 0.095,
-                R: 6.0,
-                S: 6.3,
-                T: 9.1,
-                U: 2.8,
-                V: 0.98,
-                W: 2.4,
-                X: 0.15,
-                Y: 2.0,
-                Z: 0.074,
-            };
-
-            // --- Encryption Controllers ---
-            function runEcc() {
-                const text = document
-                    .getElementById("plaintextInput")
-                    .value.toUpperCase();
-                const kB = parseInt(
-                    document.getElementById("eccPrivKey").value,
-                    10,
+            // ==========================================
+            // 4. BIP-39 & BIP-32/44 DERIVATION ENGINE
+            // ==========================================
+            async function pbkdf2Sha512(mnemonicStr, saltStr) {
+                const enc = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey(
+                    "raw",
+                    enc.encode(mnemonicStr),
+                    { name: "PBKDF2" },
+                    false,
+                    ["deriveBits"],
                 );
-                const r = parseInt(
-                    document.getElementById("eccEphemeral").value,
-                    10,
+                const derived = await crypto.subtle.deriveBits(
+                    {
+                        name: "PBKDF2",
+                        salt: enc.encode("mnemonic" + saltStr),
+                        iterations: 2048,
+                        hash: "SHA-512",
+                    },
+                    keyMaterial,
+                    512,
                 );
-
-                const QB = ecMul(kB, G);
-                document.getElementById("eccPubKey").innerText =
-                    `(${QB[0]}, ${QB[1]})`;
-                document.getElementById("targetPubKeyDisplay").innerText =
-                    `(${QB[0]}, ${QB[1]})`;
-
-                const R = ecMul(r, G);
-                const S = ecMul(r, QB); // Shared secret = r * QB = r * kB * G
-                document.getElementById("eccR").innerText =
-                    `(${R[0]}, ${R[1]})`;
-                document.getElementById("eccShared").innerText =
-                    `(${S[0]}, ${S[1]})`;
-
-                // Mask derived from shared secret coordinate S.x
-                const mask = S[0];
-
-                // Encrypt letters
-                let cipher = "";
-                for (const ch of text) {
-                    if (ch >= "A" && ch <= "Z") {
-                        const code = ch.charCodeAt(0) - 65;
-                        cipher += String.fromCharCode(
-                            ((code + mask) % 26) + 65,
-                        );
-                    } else {
-                        cipher += ch;
-                    }
-                }
-                document.getElementById("eccCiphertext").innerText = cipher;
-
-                // Bob Decrypts: computes S = kB * R
-                const bobS = ecMul(kB, R);
-                const bobMask = bobS[0];
-                let decrypted = "";
-                for (const ch of cipher) {
-                    if (ch >= "A" && ch <= "Z") {
-                        const code = ch.charCodeAt(0) - 65;
-                        decrypted += String.fromCharCode(
-                            ((code - bobMask + 26) % 26) + 65,
-                        );
-                    } else {
-                        decrypted += ch;
-                    }
-                }
-                document.getElementById("eccDecrypted").innerText = decrypted;
+                return new Uint8Array(derived);
             }
 
-            function runCaesar() {
-                const text = document
-                    .getElementById("plaintextInput")
-                    .value.toUpperCase();
-                const shift =
-                    parseInt(document.getElementById("caesarShift").value, 10) %
-                    26;
-
-                let cipher = "";
-                for (const ch of text) {
-                    if (ch >= "A" && ch <= "Z") {
-                        cipher += String.fromCharCode(
-                            ((ch.charCodeAt(0) - 65 + shift) % 26) + 65,
-                        );
-                    } else {
-                        cipher += ch;
-                    }
-                }
-                document.getElementById("caesarCiphertext").innerText = cipher;
-
-                let dec = "";
-                for (const ch of cipher) {
-                    if (ch >= "A" && ch <= "Z") {
-                        dec += String.fromCharCode(
-                            ((ch.charCodeAt(0) - 65 - shift + 26) % 26) + 65,
-                        );
-                    } else {
-                        dec += ch;
-                    }
-                }
-                document.getElementById("caesarDecrypted").innerText = dec;
+            async function hmacSha512(keyBytes, dataBytes) {
+                const key = await crypto.subtle.importKey(
+                    "raw",
+                    keyBytes,
+                    { name: "HMAC", hash: "SHA-512" },
+                    false,
+                    ["sign"],
+                );
+                const sig = await crypto.subtle.sign("HMAC", key, dataBytes);
+                return new Uint8Array(sig);
             }
 
-            // --- Statistical Cryptanalysis of Caesar Cipher ---
-            function crackCaesar() {
-                const cipher = document
-                    .getElementById("crackInput")
-                    .value.toUpperCase();
-                const lettersOnly = cipher.replace(/[^A-Z]/g, "");
-                const N = lettersOnly.length;
-                if (N === 0) return;
+            async function deriveBIP44EthereumKey(seedBytes) {
+                const enc = new TextEncoder();
+                const masterI = await hmacSha512(
+                    enc.encode("Bitcoin seed"),
+                    seedBytes,
+                );
+                let privKey = BigInt(
+                    "0x" + bytesToHex(masterI.subarray(0, 32)),
+                );
+                let chainCode = masterI.subarray(32, 64);
 
-                let bestShift = 0;
-                let minChi = Infinity;
+                const segments = [
+                    { idx: 44, hardened: true },
+                    { idx: 60, hardened: true },
+                    { idx: 0, hardened: true },
+                    { idx: 0, hardened: false },
+                    { idx: 0, hardened: false },
+                ];
 
-                // Test all 26 possible shifts
-                for (let s = 0; s < 26; s++) {
-                    const counts = {};
-                    for (const ch in ENG_FREQ) counts[ch] = 0;
+                for (const seg of segments) {
+                    const data = new Uint8Array(37);
+                    const indexNum = seg.hardened
+                        ? seg.idx + 0x80000000
+                        : seg.idx;
 
-                    for (const ch of lettersOnly) {
-                        const decCh = String.fromCharCode(
-                            ((ch.charCodeAt(0) - 65 - s + 26) % 26) + 65,
+                    if (seg.hardened) {
+                        data[0] = 0x00;
+                        const pkBytes = hexToBytes(
+                            privKey.toString(16).padStart(64, "0"),
                         );
-                        counts[decCh]++;
-                    }
-
-                    // Compute Chi-Squared against English expected counts
-                    let chi = 0;
-                    for (const ch in ENG_FREQ) {
-                        const expected = (ENG_FREQ[ch] / 100) * N;
-                        const observed = counts[ch];
-                        chi += Math.pow(observed - expected, 2) / expected;
-                    }
-
-                    if (chi < minChi) {
-                        minChi = chi;
-                        bestShift = s;
-                    }
-                }
-
-                // Recover Plaintext with best shift
-                let recovered = "";
-                for (const ch of cipher) {
-                    if (ch >= "A" && ch <= "Z") {
-                        recovered += String.fromCharCode(
-                            ((ch.charCodeAt(0) - 65 - bestShift + 26) % 26) +
-                                65,
-                        );
+                        data.set(pkBytes, 1);
                     } else {
-                        recovered += ch;
+                        const pub = ecMul(privKey);
+                        const prefix = pub[1] % 2n === 0n ? 0x02 : 0x03;
+                        data[0] = prefix;
+                        data.set(
+                            hexToBytes(pub[0].toString(16).padStart(64, "0")),
+                            1,
+                        );
                     }
+
+                    const view = new DataView(data.buffer);
+                    view.setUint32(33, indexNum, false);
+
+                    const I = await hmacSha512(chainCode, data);
+                    const IL = BigInt("0x" + bytesToHex(I.subarray(0, 32)));
+                    privKey = (IL + privKey) % SECP_N;
+                    chainCode = I.subarray(32, 64);
                 }
 
-                document.getElementById("crackedKey").innerText =
-                    `${bestShift} (${String.fromCharCode(65 + bestShift)})`;
-                document.getElementById("crackedChi").innerText =
-                    minChi.toFixed(2);
-                document.getElementById("crackedPlaintext").innerText =
-                    recovered;
-
-                renderFrequencyComparison(lettersOnly);
+                return privKey;
             }
 
-            function renderFrequencyComparison(letters) {
-                const cont = document.getElementById("freqChartContainer");
-                cont.innerHTML = "";
+            // ==========================================
+            // 5. UI PIPELINE CONTROLLER
+            // ==========================================
+            async function executePipeline() {
+                const mnemonic = document
+                    .getElementById("mnemonicInput")
+                    .value.trim();
+                const passphrase =
+                    document.getElementById("passphraseInput").value;
+                const path = document
+                    .getElementById("derivationPath")
+                    .value.trim();
+                document.getElementById("outPathLabel").innerText = path;
+
+                // Step 1: BIP-39 Seed
+                const seedBytes = await pbkdf2Sha512(mnemonic, passphrase);
+                const seedHex = bytesToHex(seedBytes);
+                document.getElementById("outSeed").innerText = `0x${seedHex}`;
+
+                // Step 2: BIP-32/44 Private Key
+                const privBig = await deriveBIP44EthereumKey(seedBytes);
+                const privHex = "0x" + privBig.toString(16).padStart(64, "0");
+                document.getElementById("outPrivKey").innerText = privHex;
+
+                // Step 3: secp256k1 Public Key
+                const pubPt = ecMul(privBig);
+                const pubX = pubPt[0].toString(16).padStart(64, "0");
+                const pubY = pubPt[1].toString(16).padStart(64, "0");
+                const uncompressedPubHex = "04" + pubX + pubY;
+                document.getElementById("outPubKey").innerText =
+                    `0x${uncompressedPubHex}`;
+
+                // Step 4: Keccak-256 Raw Address
+                const pubBytes = hexToBytes(pubX + pubY);
+                const fullHash = keccak256(pubBytes);
+                const rawAddr = bytesToHex(fullHash.subarray(12, 32));
+                document.getElementById("outRawAddr").innerText =
+                    `0x${rawAddr}`;
+
+                // Step 5: EIP-55 Checksum
+                const checksumAddr = toChecksumAddress(rawAddr);
+                document.getElementById("outCheckAddr").innerText =
+                    checksumAddr;
+
+                // Populate Typo verifier
+                document.getElementById("typoInput").value = checksumAddr;
+                checkTypo();
+
+                // Render Stats
+                renderAddressStats(rawAddr, checksumAddr);
+            }
+
+            function checkTypo() {
+                const val = document.getElementById("typoInput").value.trim();
+                const resBox = document.getElementById("typoResult");
+                const check = verifyEIP55(val);
+
+                if (check.valid) {
+                    resBox.style.background = "#ecfdf5";
+                    resBox.style.color = "#065f46";
+                    resBox.style.border = "1px solid #a7f3d0";
+                    resBox.innerHTML = `✓ VALID CHECKSUM: The address passed EIP-55 verification. Wallets will accept this transfer.`;
+                } else {
+                    resBox.style.background = "#fef2f2";
+                    resBox.style.color = "#991b1b";
+                    resBox.style.border = "1px solid #fecaca";
+                    resBox.innerHTML = `✗ ${check.reason.toUpperCase()}!<br><small style="font-weight:400;">Expected: <code>${check.expected || "N/A"}</code><br>Wallets like MetaMask or Rabby will block this transaction from broadcasting.</small>`;
+                }
+            }
+
+            function renderAddressStats(rawHex, checkAddr) {
                 const counts = {};
-                for (let i = 0; i < 26; i++)
-                    counts[String.fromCharCode(65 + i)] = 0;
-                for (const ch of letters) counts[ch]++;
+                const hexChars = "0123456789abcdef";
+                for (const c of hexChars) counts[c] = 0;
+                for (const c of rawHex.toLowerCase()) counts[c]++;
 
-                for (let i = 0; i < 26; i++) {
-                    const ch = String.fromCharCode(65 + i);
-                    const obsPct =
-                        letters.length > 0
-                            ? (counts[ch] / letters.length) * 100
-                            : 0;
-                    const engPct = ENG_FREQ[ch];
+                const cvs = document.getElementById("addrHistCanvas");
+                const c = cvs.getContext("2d");
+                const w = cvs.width,
+                    h = cvs.height,
+                    p = 25;
+                c.clearRect(0, 0, w, h);
 
-                    const row = document.createElement("div");
-                    row.className = "freq-bar-container";
-                    row.innerHTML = `
-        <div class="freq-letter">${ch}</div>
-        <div class="freq-track">
-          <div class="freq-fill-obs" style="width:${Math.min(obsPct * 4, 100)}%;"></div>
-        </div>
-        <div style="width:38px; font-size:0.75rem; color:#2563eb;">${obsPct.toFixed(1)}%</div>
-        <div class="freq-track">
-          <div class="freq-fill-eng" style="width:${Math.min(engPct * 4, 100)}%;"></div>
-        </div>
-        <div style="width:38px; font-size:0.75rem; color:#64748b;">${engPct.toFixed(1)}%</div>
-      `;
-                    cont.appendChild(row);
-                }
-            }
+                const barW = (w - 2 * p) / 16;
+                const maxVal = Math.max(...Object.values(counts), 4);
 
-            // --- Toy ECC Brute-Force Key Recovery Attack ---
-            function attackToyEcc() {
-                const targetText = document.getElementById(
-                    "targetPubKeyDisplay",
-                ).innerText;
-                const match = targetText.match(/\((\d+),\s*(\d+)\)/);
-                if (!match) return;
-                const target = [parseInt(match[1], 10), parseInt(match[2], 10)];
+                c.font = "11px sans-serif";
+                c.textAlign = "center";
 
-                const tableBody = document.getElementById("attackLogBody");
-                tableBody.innerHTML = "";
+                const baseH = (2.5 / maxVal) * (h - 2 * p);
+                c.strokeStyle = "#ef4444";
+                c.lineWidth = 1.5;
+                c.setLineDash([4, 4]);
+                c.beginPath();
+                c.moveTo(p, h - p - baseH);
+                c.lineTo(w - p, h - p - baseH);
+                c.stroke();
+                c.setLineDash([]);
 
-                let foundK = null;
-                for (let testK = 1; testK <= ORDER; testK++) {
-                    const candidatePt = ecMul(testK, G);
-                    const isMatch =
-                        candidatePt &&
-                        candidatePt[0] === target[0] &&
-                        candidatePt[1] === target[1];
+                hexChars.split("").forEach((char, i) => {
+                    const bx = p + i * barW;
+                    const bH = (counts[char] / maxVal) * (h - 2 * p);
+                    const by = h - p - bH;
 
-                    const tr = document.createElement("tr");
-                    const ptStr = candidatePt
-                        ? `(${candidatePt[0]}, ${candidatePt[1]})`
-                        : "Infinity";
-                    tr.innerHTML = `
-        <td><strong>k = ${testK}</strong></td>
-        <td>${ptStr}</td>
-        <td>${isMatch ? '<span style="color:#10b981; font-weight:700;">✓ MATCH FOUND</span>' : '<span style="color:#94a3b8;">Mismatch</span>'}</td>
-      `;
-                    tableBody.appendChild(tr);
+                    c.fillStyle = /[0-9]/.test(char) ? "#3b82f6" : "#10b981";
+                    c.fillRect(bx + 3, by, barW - 6, bH);
 
-                    if (isMatch) {
-                        foundK = testK;
-                        break;
+                    c.fillStyle = "#64748b";
+                    c.fillText(char, bx + barW / 2, h - p + 16);
+
+                    if (counts[char] > 0) {
+                        c.fillStyle = "#0f172a";
+                        c.fillText(counts[char], bx + barW / 2, by - 4);
+                    }
+                });
+
+                let letters = 0,
+                    uppers = 0;
+                for (const ch of checkAddr.replace("0x", "")) {
+                    if (/[a-zA-Z]/.test(ch)) {
+                        letters++;
+                        if (/[A-Z]/.test(ch)) uppers++;
                     }
                 }
-
-                if (foundK !== null) {
-                    document.getElementById("eccAttackResult").style.display =
-                        "block";
-                    document.getElementById("recoveredPrivKey").innerText =
-                        `kB = ${foundK}`;
-                    document.getElementById("attackSteps").innerText = foundK;
-
-                    // Decrypt cipher using recovered key
-                    const cipher =
-                        document.getElementById("eccCiphertext").innerText;
-                    const RText = document.getElementById("eccR").innerText;
-                    const rMatch = RText.match(/\((\d+),\s*(\d+)\)/);
-                    if (rMatch) {
-                        const R = [
-                            parseInt(rMatch[1], 10),
-                            parseInt(rMatch[2], 10),
-                        ];
-                        const S = ecMul(foundK, R);
-                        const mask = S[0];
-                        let dec = "";
-                        for (const ch of cipher) {
-                            if (ch >= "A" && ch <= "Z") {
-                                dec += String.fromCharCode(
-                                    ((ch.charCodeAt(0) - 65 - mask + 26) % 26) +
-                                        65,
-                                );
-                            } else {
-                                dec += ch;
-                            }
-                        }
-                        document.getElementById(
-                            "attackDecryptedText",
-                        ).innerText = dec;
-                    }
-                }
+                document.getElementById("statAlphaCount").innerText =
+                    `${letters} / 40 (${((letters / 40) * 100).toFixed(0)}%)`;
+                document.getElementById("statCapRatio").innerText =
+                    `${uppers}/${letters} capitalized (${letters ? ((uppers / letters) * 100).toFixed(0) : 0}%)`;
             }
 
-            // --- Listeners & Initialization ---
             document
-                .getElementById("btnEccRun")
-                .addEventListener("click", runEcc);
+                .getElementById("btnDerive")
+                .addEventListener("click", executePipeline);
             document
-                .getElementById("btnCaesarRun")
-                .addEventListener("click", runCaesar);
-            document
-                .getElementById("btnCrack")
-                .addEventListener("click", crackCaesar);
-            document
-                .getElementById("btnAttackEcc")
-                .addEventListener("click", attackToyEcc);
+                .getElementById("typoInput")
+                .addEventListener("input", checkTypo);
 
             document
-                .getElementById("btnShortTest")
+                .getElementById("btnStandard")
                 .addEventListener("click", () => {
-                    document.getElementById("crackInput").value =
-                        "KHOOR ZRUOG BRX"; // "HELLO WORLD YOU" (shift 3)
-                    crackCaesar();
+                    document.getElementById("mnemonicInput").value =
+                        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+                    document.getElementById("passphraseInput").value = "";
+                    document.getElementById("derivationPath").value =
+                        "m/44'/60'/0'/0/0";
+                    executePipeline();
                 });
 
             document
-                .getElementById("btnLongTest")
+                .getElementById("btnRandom")
                 .addEventListener("click", () => {
-                    document.getElementById("crackInput").value =
-                        "FUBSWRJUDSKB LV WKH SUDFWLFH DQG VWXGB RI WHFKQLTXHV IRU VHFXUH FRPPXQLFDWLRQ LQ WKH SUHVHQFH RI WKLUG SDUWLHV FDOOHG DGYHUVDULHV FRQVWUXFWLQJ DQG DQDOBCLQJ SURWRFROV WKDW SUHYHQW SXEOLF RU WKLUG SDUWLHV IURP UHDGLQJ SULYDWH PHVVDJHV";
-                    crackCaesar();
+                    const sampleWords = [
+                        "planet",
+                        "ocean",
+                        "silver",
+                        "mountain",
+                        "crypto",
+                        "forest",
+                        "matrix",
+                        "shield",
+                        "beacon",
+                        "galaxy",
+                        "rocket",
+                        "whisper",
+                        "echo",
+                        "canvas",
+                        "orbit",
+                        "quantum",
+                    ];
+                    const randomWords = Array.from(
+                        { length: 12 },
+                        () =>
+                            sampleWords[
+                                Math.floor(Math.random() * sampleWords.length)
+                            ],
+                    ).join(" ");
+                    document.getElementById("mnemonicInput").value =
+                        randomWords;
+                    executePipeline();
                 });
 
-            document
-                .getElementById("eccPrivKey")
-                .addEventListener("input", runEcc);
-            document
-                .getElementById("eccEphemeral")
-                .addEventListener("input", runEcc);
-            document
-                .getElementById("caesarShift")
-                .addEventListener("input", runCaesar);
-            document
-                .getElementById("plaintextInput")
-                .addEventListener("input", () => {
-                    runEcc();
-                    runCaesar();
-                });
-
-            // Run on page load
-            runEcc();
-            runCaesar();
-            crackCaesar();
+            executePipeline();
         </script>
     </body>
 </html>

@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HMWK 2 — Toy ECC vs. Caesar Cipher & Cryptanalysis</title>
+        <link rel="stylesheet" href="style.css" />
+        <style>
+            .cipher-box {
+                background: #fdfdfd;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 14px;
+            }
+            .cipher-title {
+                font-weight: 700;
+                font-size: 0.95rem;
+                margin-bottom: 6px;
+                color: #1e293b;
+                display: flex;
+                justify-content: space-between;
+            }
+            .freq-bar-container {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 3px;
+                font-size: 0.85rem;
+            }
+            .freq-letter {
+                width: 18px;
+                font-weight: 700;
+                text-align: center;
+            }
+            .freq-track {
+                flex: 1;
+                background: #f1f5f9;
+                height: 14px;
+                border-radius: 3px;
+                overflow: hidden;
+            }
+            .freq-fill-obs {
+                height: 100%;
+                background: var(--primary);
+            }
+            .freq-fill-eng {
+                height: 100%;
+                background: #94a3b8;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <a href="index.html" class="nav-back"
+                >&larr; Back to Portfolio Index</a
+            >
+
+            <header>
+                <h1>HMWK 2 — Toy ECC vs. Caesar Cipher &amp; Cryptanalysis</h1>
+                <p>
+                    Comparing Asymmetric Public-Key Encryption (secp256k1 toy
+                    curve) with Classical Substitution (Caesar Cipher),
+                    accompanied by automated statistical cryptanalysis and
+                    restricted key-space attacks.
+                </p>
+            </header>
+
+            <!-- Section 1: Side-by-Side Encryption & Decryption -->
+            <div class="card">
+                <h2>
+                    1. Encryption &amp; Decryption: Toy ECC vs. Caesar Cipher
+                </h2>
+                <p>
+                    Encrypt the exact same plaintext message using both
+                    algorithms:
+                </p>
+
+                <div class="control-group">
+                    <label for="plaintextInput"
+                        >Plaintext Message (A&ndash;Z):</label
+                    >
+                    <input
+                        type="text"
+                        id="plaintextInput"
+                        value="ATTACK AT DAWN ON THE BLOCKCHAIN"
+                        style="text-transform: uppercase"
+                    />
+                </div>
+
+                <div class="grid-2">
+                    <!-- Toy ECC Box -->
+                    <div class="cipher-box">
+                        <div class="cipher-title">
+                            <span
+                                >🔒 Asymmetric Toy ECC (ECIES-style
+                                Scheme)</span
+                            >
+                            <span
+                                class="badge"
+                                style="background: #e0e7ff; color: #3730a3"
+                                >y² ≡ x³ + 7 (mod 17)</span
+                            >
+                        </div>
+                        <p style="font-size: 0.88rem; margin: 4px 0 10px 0">
+                            Base Generator
+                            <span class="badge-math">G = (6, 6)</span> [Order
+                            <i>N</i> = 18].
+                        </p>
+
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 10px;
+                                margin-bottom: 10px;
+                            "
+                        >
+                            <div>
+                                <label style="font-size: 0.85rem"
+                                    >Bob's Private Key (k<sub>B</sub>):</label
+                                >
+                                <input
+                                    type="number"
+                                    id="eccPrivKey"
+                                    value="5"
+                                    min="1"
+                                    max="17"
+                                />
+                            </div>
+                            <div>
+                                <label style="font-size: 0.85rem"
+                                    >Bob's Public Key (Q<sub>B</sub> =
+                                    k<sub>B</sub>G):</label
+                                >
+                                <div
+                                    class="code-val"
+                                    id="eccPubKey"
+                                    style="margin-top: 0; padding: 8px"
+                                >
+                                    (10, 15)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label style="font-size: 0.85rem"
+                                >Alice's Ephemeral Key (r):</label
+                            >
+                            <input
+                                type="number"
+                                id="eccEphemeral"
+                                value="7"
+                                min="1"
+                                max="17"
+                            />
+                        </div>
+
+                        <button
+                            id="btnEccRun"
+                            style="width: 100%; margin-bottom: 10px"
+                        >
+                            Encrypt &amp; Decrypt with ECC
+                        </button>
+
+                        <div style="font-size: 0.88rem">
+                            <div>
+                                <strong>Ephemeral Public Key (R = rG):</strong>
+                                <span id="eccR" class="badge-math"
+                                    >(15, 4)</span
+                                >
+                            </div>
+                            <div>
+                                <strong
+                                    >Shared Secret Point (S = rQ<sub>B</sub> =
+                                    k<sub>B</sub>R):</strong
+                                >
+                                <span id="eccShared" class="badge-math"
+                                    >(6, 11)</span
+                                >
+                            </div>
+                            <div>
+                                <strong>Derived Keystream Mask:</strong>
+                                <span class="badge-math"
+                                    >S<sub>x</sub> = 6</span
+                                >
+                            </div>
+                            <div style="margin-top: 6px">
+                                <strong>Ciphertext:</strong>
+                            </div>
+                            <div class="code-val" id="eccCiphertext">--</div>
+                            <div style="margin-top: 6px">
+                                <strong>Bob's Decrypted Message:</strong>
+                            </div>
+                            <div
+                                class="code-val"
+                                id="eccDecrypted"
+                                style="color: #065f46; background: #ecfdf5"
+                            >
+                                --
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Caesar Cipher Box -->
+                    <div class="cipher-box">
+                        <div class="cipher-title">
+                            <span>🏛️ Classical Caesar Cipher</span>
+                            <span
+                                class="badge"
+                                style="background: #fef3c7; color: #92400e"
+                                >Symmetric Substitution</span
+                            >
+                        </div>
+                        <p style="font-size: 0.88rem; margin: 4px 0 10px 0">
+                            Modulo 26 shift:
+                            <span class="badge-math"
+                                >C<sub>i</sub> ≡ M<sub>i</sub> + k (mod
+                                26)</span
+                            >.
+                        </p>
+
+                        <div class="control-group">
+                            <label style="font-size: 0.85rem"
+                                >Symmetric Shift Key (k &isin; [0..25]):</label
+                            >
+                            <input
+                                type="number"
+                                id="caesarShift"
+                                value="3"
+                                min="0"
+                                max="25"
+                            />
+                        </div>
+
+                        <button
+                            id="btnCaesarRun"
+                            class="secondary"
+                            style="width: 100%; margin-bottom: 10px"
+                        >
+                            Encrypt &amp; Decrypt with Caesar
+                        </button>
+
+                        <div style="font-size: 0.88rem">
+                            <div>
+                                <strong>Key Space:</strong>
+                                <span class="badge-math">26 possible keys</span>
+                            </div>
+                            <div>
+                                <strong>Shared Secret:</strong> Both parties
+                                must agree on
+                                <span class="badge-math">k</span> in advance.
+                            </div>
+                            <div style="margin-top: 20px">
+                                <strong>Caesar Ciphertext:</strong>
+                            </div>
+                            <div class="code-val" id="caesarCiphertext">--</div>
+                            <div style="margin-top: 6px">
+                                <strong>Decrypted Message:</strong>
+                            </div>
+                            <div
+                                class="code-val"
+                                id="caesarDecrypted"
+                                style="color: #065f46; background: #ecfdf5"
+                            >
+                                --
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Statistical Cryptanalysis of the Caesar Cipher -->
+            <div class="card">
+                <h2>2. Statistical Cryptanalysis of the Caesar Cipher</h2>
+                <p>
+                    The Caesar cipher preserves the underlying frequency
+                    distribution of letters. Given English text, we recover the
+                    secret key by minimizing the
+                    <strong>Chi-Squared (&chi;&sup2;) statistic</strong> against
+                    the standard English frequency corpus:
+                    <span class="badge-math"
+                        >&chi;&sup2; = &sum; (O<sub>i</sub> &minus;
+                        E<sub>i</sub>)&sup2; / E<sub>i</sub></span
+                    >.
+                </p>
+
+                <div class="grid-2">
+                    <div>
+                        <label for="crackInput">Ciphertext to Crack:</label>
+                        <textarea id="crackInput" rows="3">
+DWWDFN DW GDZQ RQ WKH EORFNFKDLQ</textarea>
+
+                        <div class="btn-group" style="margin-bottom: 14px">
+                            <button id="btnCrack">
+                                Perform Statistical Attack (&chi;&sup2;)
+                            </button>
+                            <button id="btnShortTest" class="secondary">
+                                Load Short Sample (14 chars)
+                            </button>
+                            <button id="btnLongTest" class="secondary">
+                                Load Long Sample (220 chars)
+                            </button>
+                        </div>
+
+                        <div
+                            class="cipher-box"
+                            id="crackResultBox"
+                            style="background: #f8fafc"
+                        >
+                            <div>
+                                <strong>Recovered Shift Key (k):</strong>
+                                <span
+                                    id="crackedKey"
+                                    style="
+                                        font-weight: 700;
+                                        color: var(--primary);
+                                        font-size: 1.1rem;
+                                    "
+                                    >--</span
+                                >
+                            </div>
+                            <div>
+                                <strong>Minimum &chi;&sup2; Score:</strong>
+                                <span id="crackedChi" class="badge-math"
+                                    >--</span
+                                >
+                            </div>
+                            <div style="margin-top: 8px">
+                                <strong>Recovered Plaintext:</strong>
+                            </div>
+                            <div
+                                class="code-val"
+                                id="crackedPlaintext"
+                                style="
+                                    color: #065f46;
+                                    background: #ecfdf5;
+                                    font-weight: 600;
+                                "
+                            >
+                                --
+                            </div>
+                        </div>
+
+                        <!-- Sample Length Benchmark -->
+                        <h3 style="margin-top: 16px">
+                            Effectiveness vs. Ciphertext Length:
+                        </h3>
+                        <table style="font-size: 0.88rem">
+                            <thead>
+                                <tr>
+                                    <th>Length</th>
+                                    <th>Attack Accuracy</th>
+                                    <th>Reason / Statistical Vulnerability</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>&lt; 25 chars</strong></td>
+                                    <td
+                                        style="
+                                            color: var(--amber);
+                                            font-weight: 600;
+                                        "
+                                    >
+                                        Unreliable (&approx; 40&ndash;60%)
+                                    </td>
+                                    <td>
+                                        Small sample size: noise dominates;
+                                        standard 'E' or 'T' may not be the most
+                                        frequent.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>50&ndash;100 chars</strong></td>
+                                    <td
+                                        style="
+                                            color: var(--green);
+                                            font-weight: 600;
+                                        "
+                                    >
+                                        High (&approx; 85&ndash;95%)
+                                    </td>
+                                    <td>
+                                        Law of large numbers starts evening out
+                                        letter distributions toward English
+                                        norms.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>&gt; 200 chars</strong></td>
+                                    <td
+                                        style="
+                                            color: var(--green);
+                                            font-weight: 700;
+                                        "
+                                    >
+                                        Virtually 100%
+                                    </td>
+                                    <td>
+                                        Chi-squared statistic unequivocally
+                                        identifies the shift with zero
+                                        ambiguity.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div>
+                        <h3>Live Letter Frequency Analysis:</h3>
+                        <p style="font-size: 0.85rem; margin-bottom: 8px">
+                            Blue bars = Observed in Ciphertext | Gray bars =
+                            Standard English Expected.
+                        </p>
+                        <div
+                            id="freqChartContainer"
+                            style="
+                                max-height: 380px;
+                                overflow-y: auto;
+                                padding-right: 6px;
+                            "
+                        >
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Attacking the Toy ECC Scheme -->
+            <div class="card">
+                <h2>
+                    3. Cryptanalysis of the Toy ECC Scheme (Restricted Key Space
+                    Attack)
+                </h2>
+                <p>
+                    In Part 1, we restricted the private key to
+                    <span class="math">k &isin; [1, 18]</span> to make manual
+                    calculations feasible. Below is an automated brute-force
+                    solver that solves the
+                    <strong
+                        >Elliptic Curve Discrete Logarithm Problem
+                        (ECDLP)</strong
+                    >
+                    by testing scalar multiples until
+                    <span class="math">k &middot; G = Q<sub>B</sub></span
+                    >:
+                </p>
+
+                <div class="grid-2">
+                    <div>
+                        <label
+                            >Intercepted Bob's Public Key
+                            (Q<sub>B</sub>):</label
+                        >
+                        <div class="code-val" id="targetPubKeyDisplay">
+                            (10, 15)
+                        </div>
+                        <button
+                            id="btnAttackEcc"
+                            style="margin-top: 12px; width: 100%"
+                        >
+                            Execute ECDLP Exhaustive Search Attack
+                        </button>
+
+                        <div
+                            class="cipher-box"
+                            id="eccAttackResult"
+                            style="
+                                margin-top: 14px;
+                                display: none;
+                                background: #ecfdf5;
+                                border-color: #a7f3d0;
+                            "
+                        >
+                            <div style="font-weight: 700; color: #065f46">
+                                Target Broken Successfully!
+                            </div>
+                            <div>
+                                Recovered Private Key:
+                                <span
+                                    id="recoveredPrivKey"
+                                    class="badge-math"
+                                    style="font-size: 1.1rem; font-weight: 700"
+                                    >--</span
+                                >
+                            </div>
+                            <div>
+                                Steps Required:
+                                <span id="attackSteps" class="badge-math"
+                                    >--</span
+                                >
+                                / 18 scalar additions
+                            </div>
+                            <div style="margin-top: 6px">
+                                Decrypted Plaintext using recovered key:
+                            </div>
+                            <div class="code-val" id="attackDecryptedText">
+                                --
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3>ECDLP Attack Log:</h3>
+                        <div class="table-container" style="max-height: 220px">
+                            <table id="attackLogTable">
+                                <thead>
+                                    <tr>
+                                        <th>Test k</th>
+                                        <th>Computed k &middot; G</th>
+                                        <th>Target Match?</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attackLogBody">
+                                    <tr>
+                                        <td
+                                            colspan="3"
+                                            style="
+                                                color: #64748b;
+                                                text-align: center;
+                                            "
+                                        >
+                                            Click "Execute" to run attack.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Theoretical Discussion & Homework Questions -->
+            <div class="card">
+                <h2>4. Theoretical Discussion &amp; Homework Questions</h2>
+                <div
+                    style="font-size: 0.96rem; color: #334155; line-height: 1.7"
+                >
+                    <h3>1. Comparison: Toy ECC Scheme vs. Caesar Cipher</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Toy ECC (ECIES / ElGamal)</th>
+                                <th>Caesar Cipher</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Cryptography Type</strong></td>
+                                <td>
+                                    <strong>Asymmetric (Public-Key):</strong>
+                                    Separate encryption key (<span class="math"
+                                        >Q<sub>B</sub></span
+                                    >) and decryption key (<span class="math"
+                                        >k<sub>B</sub></span
+                                    >).
+                                </td>
+                                <td>
+                                    <strong>Symmetric:</strong> Single secret
+                                    shift key (<span class="math">k</span>)
+                                    shared by both sender and receiver.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Key Space Size</strong></td>
+                                <td>
+                                    Group order of the curve:
+                                    <span class="math">N = 18</span> (Toy) vs.
+                                    <span class="math"
+                                        >&approx; 2<sup>256</sup></span
+                                    >
+                                    (Real secp256k1).
+                                </td>
+                                <td>
+                                    Modulo 26: exactly
+                                    <span class="math">26</span> possible keys
+                                    (<span class="math"
+                                        >k &isin; {0, \dots, 25}</span
+                                    >).
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mathematical Procedure</strong></td>
+                                <td>
+                                    Non-linear group scalar multiplication over
+                                    finite field (<span class="math"
+                                        >Q = kG</span
+                                    >), followed by Diffie-Hellman mask
+                                    addition.
+                                </td>
+                                <td>
+                                    Linear monoalphabetic substitution: each
+                                    letter
+                                    <span class="math"
+                                        >x &rarr; (x + k) \bmod 26</span
+                                    >.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Statistical Properties</strong></td>
+                                <td>
+                                    <strong
+                                        >Eliminates letter frequencies</strong
+                                    >
+                                    when paired with ephemeral keys (<span
+                                        class="math"
+                                        >r</span
+                                    >
+                                    changes per message).
+                                </td>
+                                <td>
+                                    <strong
+                                        >Completely preserves letter
+                                        frequencies:</strong
+                                    >
+                                    The ciphertext is simply a shifted copy of
+                                    the plaintext distribution.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>
+                        2. Statistical Attack (Caesar) vs. Algebraic Attack (Toy
+                        ECC)
+                    </h3>
+                    <p>
+                        &bull;
+                        <strong
+                            >The Caesar Attack is Empirical &amp;
+                            Language-Dependent:</strong
+                        >
+                        It requires redundancy in the plaintext (English
+                        language rules) and a sufficiently large sample size. If
+                        the plaintext is random bytes or compressed data,
+                        statistical cryptanalysis fails completely.<br />
+                        &bull;
+                        <strong
+                            >The Toy ECC Attack is Purely Algebraic &amp;
+                            Exact:</strong
+                        >
+                        It exploits the mathematical definition of the group. It
+                        does not require any prior knowledge of the message,
+                        language, or sample size. The attacker tests integers
+                        <span class="math">k = 1, 2, \dots</span> until
+                        <span class="math">kG = Q<sub>B</sub></span
+                        >.
+                    </p>
+
+                    <h3>3. Why the Attack Fails on Real-World secp256k1</h3>
+                    <p>
+                        In Ethereum's production
+                        <strong>secp256k1</strong> curve: $$\text{Key Space } N
+                        \approx 2^{256} \approx 1.15 \times 10^{77}$$ Even using
+                        Pollard’s Rho algorithm (which finds discrete logs in
+                        <span class="math">O(\sqrt{N})</span> operations),
+                        cracking the private key requires
+                        <span class="math"
+                            >2^{128} \approx 3.4 \times 10^{38}</span
+                        >
+                        operations. If all supercomputers on Earth performed one
+                        billion scalar multiplications per second, it would
+                        still take over <span class="math">10^{21}</span> years
+                        (millions of times the age of the universe) to crack a
+                        single private key.
+                    </p>
+
+                    <h3>
+                        4. Weaknesses: Restricted Key Space vs. Toy Scheme
+                        Design
+                    </h3>
+                    <p>
+                        &bull;
+                        <strong
+                            >Vulnerability from Restricted Key Space:</strong
+                        >
+                        A key space of <span class="math">N = 18</span> is
+                        trivial to exhaust. An adversary can test all 18 keys in
+                        less than 1 millisecond.<br />
+                        &bull;
+                        <strong
+                            >Vulnerabilities in the Toy Design Itself:</strong
+                        >
+                        <br />1.
+                        <em
+                            >Lack of Authenticated Encryption
+                            (Malleability):</em
+                        >
+                        Our toy scheme does not include a Message Authentication
+                        Code (MAC) or AEAD wrapper. An active attacker can
+                        tamper with ciphertext bits in transit. <br />2.
+                        <em>Small Field Wrap-Around:</em> Because
+                        <span class="math">p = 17</span>, shared secret
+                        coordinates <span class="math">S_x</span> take values in
+                        <span class="math">[0, 16]</span>, which is smaller than
+                        the 26-letter English alphabet, introducing modular
+                        modulo-bias if used as a raw Caesar shift.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // --- Modulo 17 Elliptic Curve Engine ---
+            const P = 17;
+            const G = [6, 6]; // Generator of order 18 on y^2 = x^3 + 7 (mod 17)
+            const ORDER = 18;
+
+            function mod(n, m = P) {
+                return ((n % m) + m) % m;
+            }
+
+            function modInv(a, m = P) {
+                a = mod(a, m);
+                if (a === 0) return 0;
+                let res = 1,
+                    base = a,
+                    exp = m - 2;
+                while (exp > 0) {
+                    if (exp % 2 === 1) res = (res * base) % m;
+                    base = (base * base) % m;
+                    exp = Math.floor(exp / 2);
+                }
+                return res;
+            }
+
+            function ecAdd(pt1, pt2) {
+                if (!pt1) return pt2;
+                if (!pt2) return pt1;
+                const [x1, y1] = pt1;
+                const [x2, y2] = pt2;
+                if (x1 === x2 && mod(y1 + y2) === 0) return null;
+                let lambda;
+                if (x1 === x2 && y1 === y2) {
+                    if (y1 === 0) return null;
+                    lambda = mod(mod(3 * x1 * x1) * modInv(2 * y1));
+                } else {
+                    lambda = mod(mod(y2 - y1) * modInv(x2 - x1));
+                }
+                const x3 = mod(lambda * lambda - x1 - x2);
+                const y3 = mod(lambda * (x1 - x3) - y1);
+                return [x3, y3];
+            }
+
+            function ecMul(k, pt = G) {
+                let R = null;
+                let B = pt;
+                let curK = k % ORDER;
+                while (curK > 0) {
+                    if (curK & 1) R = ecAdd(R, B);
+                    B = ecAdd(B, B);
+                    curK >>= 1;
+                }
+                return R;
+            }
+
+            // --- Standard English Letter Frequencies (%) ---
+            const ENG_FREQ = {
+                A: 8.2,
+                B: 1.5,
+                C: 2.8,
+                D: 4.3,
+                E: 12.7,
+                F: 2.2,
+                G: 2.0,
+                H: 6.1,
+                I: 7.0,
+                J: 0.15,
+                K: 0.77,
+                L: 4.0,
+                M: 2.4,
+                N: 6.7,
+                O: 7.5,
+                P: 1.9,
+                Q: 0.095,
+                R: 6.0,
+                S: 6.3,
+                T: 9.1,
+                U: 2.8,
+                V: 0.98,
+                W: 2.4,
+                X: 0.15,
+                Y: 2.0,
+                Z: 0.074,
+            };
+
+            // --- Encryption Controllers ---
+            function runEcc() {
+                const text = document
+                    .getElementById("plaintextInput")
+                    .value.toUpperCase();
+                const kB = parseInt(
+                    document.getElementById("eccPrivKey").value,
+                    10,
+                );
+                const r = parseInt(
+                    document.getElementById("eccEphemeral").value,
+                    10,
+                );
+
+                const QB = ecMul(kB, G);
+                document.getElementById("eccPubKey").innerText =
+                    `(${QB[0]}, ${QB[1]})`;
+                document.getElementById("targetPubKeyDisplay").innerText =
+                    `(${QB[0]}, ${QB[1]})`;
+
+                const R = ecMul(r, G);
+                const S = ecMul(r, QB); // Shared secret = r * QB = r * kB * G
+                document.getElementById("eccR").innerText =
+                    `(${R[0]}, ${R[1]})`;
+                document.getElementById("eccShared").innerText =
+                    `(${S[0]}, ${S[1]})`;
+
+                // Mask derived from shared secret coordinate S.x
+                const mask = S[0];
+
+                // Encrypt letters
+                let cipher = "";
+                for (const ch of text) {
+                    if (ch >= "A" && ch <= "Z") {
+                        const code = ch.charCodeAt(0) - 65;
+                        cipher += String.fromCharCode(
+                            ((code + mask) % 26) + 65,
+                        );
+                    } else {
+                        cipher += ch;
+                    }
+                }
+                document.getElementById("eccCiphertext").innerText = cipher;
+
+                // Bob Decrypts: computes S = kB * R
+                const bobS = ecMul(kB, R);
+                const bobMask = bobS[0];
+                let decrypted = "";
+                for (const ch of cipher) {
+                    if (ch >= "A" && ch <= "Z") {
+                        const code = ch.charCodeAt(0) - 65;
+                        decrypted += String.fromCharCode(
+                            ((code - bobMask + 26) % 26) + 65,
+                        );
+                    } else {
+                        decrypted += ch;
+                    }
+                }
+                document.getElementById("eccDecrypted").innerText = decrypted;
+            }
+
+            function runCaesar() {
+                const text = document
+                    .getElementById("plaintextInput")
+                    .value.toUpperCase();
+                const shift =
+                    parseInt(document.getElementById("caesarShift").value, 10) %
+                    26;
+
+                let cipher = "";
+                for (const ch of text) {
+                    if (ch >= "A" && ch <= "Z") {
+                        cipher += String.fromCharCode(
+                            ((ch.charCodeAt(0) - 65 + shift) % 26) + 65,
+                        );
+                    } else {
+                        cipher += ch;
+                    }
+                }
+                document.getElementById("caesarCiphertext").innerText = cipher;
+
+                let dec = "";
+                for (const ch of cipher) {
+                    if (ch >= "A" && ch <= "Z") {
+                        dec += String.fromCharCode(
+                            ((ch.charCodeAt(0) - 65 - shift + 26) % 26) + 65,
+                        );
+                    } else {
+                        dec += ch;
+                    }
+                }
+                document.getElementById("caesarDecrypted").innerText = dec;
+            }
+
+            // --- Statistical Cryptanalysis of Caesar Cipher ---
+            function crackCaesar() {
+                const cipher = document
+                    .getElementById("crackInput")
+                    .value.toUpperCase();
+                const lettersOnly = cipher.replace(/[^A-Z]/g, "");
+                const N = lettersOnly.length;
+                if (N === 0) return;
+
+                let bestShift = 0;
+                let minChi = Infinity;
+
+                // Test all 26 possible shifts
+                for (let s = 0; s < 26; s++) {
+                    const counts = {};
+                    for (const ch in ENG_FREQ) counts[ch] = 0;
+
+                    for (const ch of lettersOnly) {
+                        const decCh = String.fromCharCode(
+                            ((ch.charCodeAt(0) - 65 - s + 26) % 26) + 65,
+                        );
+                        counts[decCh]++;
+                    }
+
+                    // Compute Chi-Squared against English expected counts
+                    let chi = 0;
+                    for (const ch in ENG_FREQ) {
+                        const expected = (ENG_FREQ[ch] / 100) * N;
+                        const observed = counts[ch];
+                        chi += Math.pow(observed - expected, 2) / expected;
+                    }
+
+                    if (chi < minChi) {
+                        minChi = chi;
+                        bestShift = s;
+                    }
+                }
+
+                // Recover Plaintext with best shift
+                let recovered = "";
+                for (const ch of cipher) {
+                    if (ch >= "A" && ch <= "Z") {
+                        recovered += String.fromCharCode(
+                            ((ch.charCodeAt(0) - 65 - bestShift + 26) % 26) +
+                                65,
+                        );
+                    } else {
+                        recovered += ch;
+                    }
+                }
+
+                document.getElementById("crackedKey").innerText =
+                    `${bestShift} (${String.fromCharCode(65 + bestShift)})`;
+                document.getElementById("crackedChi").innerText =
+                    minChi.toFixed(2);
+                document.getElementById("crackedPlaintext").innerText =
+                    recovered;
+
+                renderFrequencyComparison(lettersOnly);
+            }
+
+            function renderFrequencyComparison(letters) {
+                const cont = document.getElementById("freqChartContainer");
+                cont.innerHTML = "";
+                const counts = {};
+                for (let i = 0; i < 26; i++)
+                    counts[String.fromCharCode(65 + i)] = 0;
+                for (const ch of letters) counts[ch]++;
+
+                for (let i = 0; i < 26; i++) {
+                    const ch = String.fromCharCode(65 + i);
+                    const obsPct =
+                        letters.length > 0
+                            ? (counts[ch] / letters.length) * 100
+                            : 0;
+                    const engPct = ENG_FREQ[ch];
+
+                    const row = document.createElement("div");
+                    row.className = "freq-bar-container";
+                    row.innerHTML = `
+        <div class="freq-letter">${ch}</div>
+        <div class="freq-track">
+          <div class="freq-fill-obs" style="width:${Math.min(obsPct * 4, 100)}%;"></div>
+        </div>
+        <div style="width:38px; font-size:0.75rem; color:#2563eb;">${obsPct.toFixed(1)}%</div>
+        <div class="freq-track">
+          <div class="freq-fill-eng" style="width:${Math.min(engPct * 4, 100)}%;"></div>
+        </div>
+        <div style="width:38px; font-size:0.75rem; color:#64748b;">${engPct.toFixed(1)}%</div>
+      `;
+                    cont.appendChild(row);
+                }
+            }
+
+            // --- Toy ECC Brute-Force Key Recovery Attack ---
+            function attackToyEcc() {
+                const targetText = document.getElementById(
+                    "targetPubKeyDisplay",
+                ).innerText;
+                const match = targetText.match(/\((\d+),\s*(\d+)\)/);
+                if (!match) return;
+                const target = [parseInt(match[1], 10), parseInt(match[2], 10)];
+
+                const tableBody = document.getElementById("attackLogBody");
+                tableBody.innerHTML = "";
+
+                let foundK = null;
+                for (let testK = 1; testK <= ORDER; testK++) {
+                    const candidatePt = ecMul(testK, G);
+                    const isMatch =
+                        candidatePt &&
+                        candidatePt[0] === target[0] &&
+                        candidatePt[1] === target[1];
+
+                    const tr = document.createElement("tr");
+                    const ptStr = candidatePt
+                        ? `(${candidatePt[0]}, ${candidatePt[1]})`
+                        : "Infinity";
+                    tr.innerHTML = `
+        <td><strong>k = ${testK}</strong></td>
+        <td>${ptStr}</td>
+        <td>${isMatch ? '<span style="color:#10b981; font-weight:700;">✓ MATCH FOUND</span>' : '<span style="color:#94a3b8;">Mismatch</span>'}</td>
+      `;
+                    tableBody.appendChild(tr);
+
+                    if (isMatch) {
+                        foundK = testK;
+                        break;
+                    }
+                }
+
+                if (foundK !== null) {
+                    document.getElementById("eccAttackResult").style.display =
+                        "block";
+                    document.getElementById("recoveredPrivKey").innerText =
+                        `kB = ${foundK}`;
+                    document.getElementById("attackSteps").innerText = foundK;
+
+                    // Decrypt cipher using recovered key
+                    const cipher =
+                        document.getElementById("eccCiphertext").innerText;
+                    const RText = document.getElementById("eccR").innerText;
+                    const rMatch = RText.match(/\((\d+),\s*(\d+)\)/);
+                    if (rMatch) {
+                        const R = [
+                            parseInt(rMatch[1], 10),
+                            parseInt(rMatch[2], 10),
+                        ];
+                        const S = ecMul(foundK, R);
+                        const mask = S[0];
+                        let dec = "";
+                        for (const ch of cipher) {
+                            if (ch >= "A" && ch <= "Z") {
+                                dec += String.fromCharCode(
+                                    ((ch.charCodeAt(0) - 65 - mask + 26) % 26) +
+                                        65,
+                                );
+                            } else {
+                                dec += ch;
+                            }
+                        }
+                        document.getElementById(
+                            "attackDecryptedText",
+                        ).innerText = dec;
+                    }
+                }
+            }
+
+            // --- Listeners & Initialization ---
+            document
+                .getElementById("btnEccRun")
+                .addEventListener("click", runEcc);
+            document
+                .getElementById("btnCaesarRun")
+                .addEventListener("click", runCaesar);
+            document
+                .getElementById("btnCrack")
+                .addEventListener("click", crackCaesar);
+            document
+                .getElementById("btnAttackEcc")
+                .addEventListener("click", attackToyEcc);
+
+            document
+                .getElementById("btnShortTest")
+                .addEventListener("click", () => {
+                    document.getElementById("crackInput").value =
+                        "KHOOR ZRUOG BRX"; // "HELLO WORLD YOU" (shift 3)
+                    crackCaesar();
+                });
+
+            document
+                .getElementById("btnLongTest")
+                .addEventListener("click", () => {
+                    document.getElementById("crackInput").value =
+                        "FUBSWRJUDSKB LV WKH SUDFWLFH DQG VWXGB RI WHFKQLTXHV IRU VHFXUH FRPPXQLFDWLRQ LQ WKH SUHVHQFH RI WKLUG SDUWLHV FDOOHG DGYHUVDULHV FRQVWUXFWLQJ DQG DQDOBCLQJ SURWRFROV WKDW SUHYHQW SXEOLF RU WKLUG SDUWLHV IURP UHDGLQJ SULYDWH PHVVDJHV";
+                    crackCaesar();
+                });
+
+            document
+                .getElementById("eccPrivKey")
+                .addEventListener("input", runEcc);
+            document
+                .getElementById("eccEphemeral")
+                .addEventListener("input", runEcc);
+            document
+                .getElementById("caesarShift")
+                .addEventListener("input", runCaesar);
+            document
+                .getElementById("plaintextInput")
+                .addEventListener("input", () => {
+                    runEcc();
+                    runCaesar();
+                });
+
+            // Run on page load
+            runEcc();
+            runCaesar();
+            crackCaesar();
+        </script>
+    </body>
+</html>
