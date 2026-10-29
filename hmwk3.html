@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            HMWK 3 — Stochastic Modeling of Penetration Processes (LLN &amp;
+            CLT)
+        </title>
+        <link rel="stylesheet" href="style.css" />
+        <style>
+            .model-selector {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 14px;
+            }
+            .model-btn {
+                flex: 1;
+                padding: 10px 14px;
+                border: 1px solid var(--border);
+                background: #f8fafc;
+                color: #334155;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                text-align: center;
+                transition: all 0.2s;
+            }
+            .model-btn.active {
+                background: var(--primary);
+                color: #ffffff;
+                border-color: var(--primary);
+            }
+            .view-tabs {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 14px;
+                flex-wrap: wrap;
+            }
+            .view-tab {
+                padding: 6px 12px;
+                font-size: 0.88rem;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                background: #f1f5f9;
+                color: #475569;
+                cursor: pointer;
+                font-weight: 600;
+            }
+            .view-tab.active {
+                background: #1e293b;
+                color: #ffffff;
+                border-color: #1e293b;
+            }
+            .chart-container {
+                position: relative;
+                margin-bottom: 16px;
+            }
+            .stat-badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-family: monospace;
+                font-size: 0.9rem;
+                font-weight: 700;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <a href="index.html" class="nav-back"
+                >&larr; Back to Portfolio Index</a
+            >
+
+            <header>
+                <h1>HMWK 3 — Stochastic Modeling of Penetration Processes</h1>
+                <p>
+                    Modeling <span class="math">m</span> independent attackers
+                    traversing <span class="math">n</span> systems using random
+                    walks.<br />
+                    Empirical investigation of the
+                    <strong>Law of Large Numbers (LLN)</strong>, variance
+                    scaling, and the
+                    <strong>Central Limit Theorem (CLT)</strong>.
+                </p>
+            </header>
+
+            <!-- Section 1: Simulator Controls -->
+            <div class="card">
+                <h2>1. Penetration Process Simulator Configuration</h2>
+
+                <label
+                    >Select Stochastic Increment Model (X<sub>i</sub>):</label
+                >
+                <div class="model-selector">
+                    <div id="btnRademacher" class="model-btn active">
+                        <div>Rademacher Model (Symmetric, Zero-Mean)</div>
+                        <small style="font-weight: 400; opacity: 0.9"
+                            >X<sub>i</sub> &isin; {&minus;1, +1}, P(X<sub
+                                >i</sub
+                            >
+                            = +1) = 0.5 &bull; &mu; = 0, &sigma;&sup2; =
+                            1</small
+                        >
+                    </div>
+                    <div id="btnBernoulli" class="model-btn">
+                        <div>Bernoulli Model (Asymmetric Penetration)</div>
+                        <small style="font-weight: 400; opacity: 0.9"
+                            >X<sub>i</sub> &isin; {0, 1}, P(X<sub>i</sub> = 1) =
+                            p &bull; &mu; = p, &sigma;&sup2; =
+                            p(1&minus;p)</small
+                        >
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div>
+                        <div class="control-group">
+                            <label for="sliderN"
+                                >Number of Systems / Steps (<span class="math"
+                                    >n</span
+                                >): <strong id="lblN">200</strong></label
+                            >
+                            <input
+                                type="range"
+                                id="sliderN"
+                                min="20"
+                                max="1000"
+                                step="10"
+                                value="200"
+                            />
+                        </div>
+
+                        <div class="control-group">
+                            <label for="sliderM"
+                                >Number of Attackers / Trajectories (<span
+                                    class="math"
+                                    >m</span
+                                >): <strong id="lblM">100</strong></label
+                            >
+                            <input
+                                type="range"
+                                id="sliderM"
+                                min="10"
+                                max="500"
+                                step="10"
+                                value="100"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <div
+                            class="control-group"
+                            id="bernProbGroup"
+                            style="opacity: 0.5"
+                        >
+                            <label for="sliderP"
+                                >Penetration Probability (<span class="math"
+                                    >p</span
+                                >): <strong id="lblP">0.50</strong></label
+                            >
+                            <input
+                                type="range"
+                                id="sliderP"
+                                min="0.05"
+                                max="0.95"
+                                step="0.05"
+                                value="0.50"
+                                disabled
+                            />
+                            <small style="color: var(--text-muted)"
+                                >Active only for the Bernoulli Model.</small
+                            >
+                        </div>
+
+                        <div class="btn-group" style="margin-top: 22px">
+                            <button id="btnRun">
+                                Simulate Fresh Trajectories
+                            </button>
+                            <button id="btnAnimate" class="secondary">
+                                Play Time Progression
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Interactive Trajectory Plots -->
+            <div class="card">
+                <div
+                    style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        margin-bottom: 12px;
+                    "
+                >
+                    <h2 style="margin: 0; border: none; padding: 0">
+                        2. Trajectory Evolution Over n Systems
+                    </h2>
+                    <div class="view-tabs">
+                        <button class="view-tab active" data-view="total">
+                            Total Score (S<sub>k</sub>)
+                        </button>
+                        <button class="view-tab" data-view="average">
+                            Average Score (S<sub>k</sub> / k) [LLN]
+                        </button>
+                        <button class="view-tab" data-view="normalized">
+                            Normalized Score (S<sub>k</sub> / &radic;k) [CLT]
+                        </button>
+                    </div>
+                </div>
+
+                <p
+                    id="viewDescription"
+                    style="
+                        font-size: 0.92rem;
+                        color: var(--text-muted);
+                        margin-bottom: 12px;
+                    "
+                >
+                    Showing cumulative total penetration scores. Trajectories
+                    disperse over time as variance grows linearly with
+                    <span class="math">k</span>.
+                </p>
+
+                <!-- Canvas Trajectories -->
+                <div class="chart-container">
+                    <canvas
+                        id="trajCanvas"
+                        width="900"
+                        height="420"
+                        style="width: 100%; height: auto"
+                    ></canvas>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <span
+                            class="legend-dot"
+                            style="background: rgba(37, 99, 235, 0.4)"
+                        ></span>
+                        Attacker Trajectories (<span class="math">m</span>
+                        paths)
+                    </div>
+                    <div class="legend-item">
+                        <span
+                            class="legend-dot"
+                            style="background: #ef4444"
+                        ></span>
+                        Theoretical Mean Expected Value (&mu;)
+                    </div>
+                    <div class="legend-item">
+                        <span
+                            class="legend-dot"
+                            style="background: #10b981"
+                        ></span>
+                        Theoretical &plusmn;1&sigma; Envelope
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Empirical Distribution vs CLT Bell Curve -->
+            <div class="grid-2">
+                <div class="card">
+                    <h2>3. Terminal Empirical Distribution at Step n</h2>
+                    <p style="font-size: 0.9rem">
+                        Histogram of the <span class="math">m</span> attacker
+                        outcomes at final system <span class="math">n</span>,
+                        overlaid with the theoretical Gaussian curve:
+                    </p>
+                    <canvas
+                        id="histCanvas"
+                        width="450"
+                        height="260"
+                        style="width: 100%; height: auto"
+                    ></canvas>
+                    <div
+                        style="
+                            font-size: 0.85rem;
+                            text-align: center;
+                            color: var(--text-muted);
+                            margin-top: 8px;
+                        "
+                    >
+                        <span style="color: #2563eb"
+                            >■ Empirical Binned Scores</span
+                        >
+                        &nbsp;|&nbsp;
+                        <span style="color: #ef4444; font-weight: 700"
+                            >— Theoretical Gaussian PDF</span
+                        >
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>4. Empirical vs. Theoretical Convergence Table</h2>
+                    <p style="font-size: 0.9rem">
+                        Mathematical variance behavior under the three scalings:
+                    </p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Quantity</th>
+                                <th>Theoretical E[&middot;]</th>
+                                <th>Theoretical Var</th>
+                                <th>Empirical Var</th>
+                                <th>Asymptotic Scaling</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong
+                                        >Total:
+                                        <span class="math"
+                                            >S<sub>n</sub></span
+                                        ></strong
+                                    >
+                                </td>
+                                <td id="thMeanTotal">0.00</td>
+                                <td id="thVarTotal">200.0</td>
+                                <td
+                                    id="empVarTotal"
+                                    class="stat-badge"
+                                    style="background: #e0e7ff; color: #3730a3"
+                                >
+                                    --
+                                </td>
+                                <td>
+                                    <span class="math">O(n)</span> (Diverges)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong
+                                        >Average:
+                                        <span class="math"
+                                            >S<sub>n</sub> / n</span
+                                        ></strong
+                                    >
+                                </td>
+                                <td id="thMeanAvg">0.00</td>
+                                <td id="thVarAvg">0.0050</td>
+                                <td
+                                    id="empVarAvg"
+                                    class="stat-badge"
+                                    style="background: #d1fae5; color: #065f46"
+                                >
+                                    --
+                                </td>
+                                <td>
+                                    <span class="math">O(1/n) &rarr; 0</span>
+                                    (LLN Collapse)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong
+                                        >Normalized:
+                                        <span class="math"
+                                            >S<sub>n</sub> / &radic;n</span
+                                        ></strong
+                                    >
+                                </td>
+                                <td id="thMeanNorm">0.00</td>
+                                <td id="thVarNorm">1.00</td>
+                                <td
+                                    id="empVarNorm"
+                                    class="stat-badge"
+                                    style="background: #fef3c7; color: #92400e"
+                                >
+                                    --
+                                </td>
+                                <td>
+                                    <span class="math">O(1)</span> (CLT
+                                    Invariant)
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p
+                        style="
+                            font-size: 0.85rem;
+                            color: var(--text-muted);
+                            margin-top: 12px;
+                        "
+                    >
+                        Notice how
+                        <span class="math">Var(S<sub>n</sub>/n)</span> shrinks
+                        toward 0 as <span class="math">n</span> increases,
+                        confirming the Weak Law of Large Numbers, while
+                        <span class="math">Var(S<sub>n</sub>/&radic;n)</span>
+                        remains constant at 1.0 in the Rademacher case.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Section 5: Theoretical Discussion & Contextual Interpretation -->
+            <div class="card">
+                <h2>
+                    5. Theoretical Discussion &amp; Cybersecurity Interpretation
+                </h2>
+                <div
+                    style="font-size: 0.96rem; color: #334155; line-height: 1.7"
+                >
+                    <h3>
+                        1. Comparison of Normalizations: Variance Behavior and
+                        Asymptotics
+                    </h3>
+                    <p>
+                        The behavior of the penetration score as the attack
+                        surface <span class="math">n</span> grows depends
+                        entirely on the normalization chosen:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong
+                                >Total Score (<span class="math"
+                                    >S<sub>n</sub> = &sum; X<sub>i</sub></span
+                                >):</strong
+                            >
+                            Variance grows linearly:
+                            <span class="math"
+                                >Var(S<sub>n</sub>) = n &sigma;&sup2;</span
+                            >. The trajectories diffuse outward over a parabolic
+                            cone with width
+                            <span class="math">&plusmn; &radic;n</span>. In
+                            security terms, the cumulative damage across
+                            <span class="math">n</span> systems fluctuates
+                            wildly between different attackers; worst-case
+                            attackers achieve catastrophic breach depth as
+                            <span class="math">n</span> increases.
+                        </li>
+                        <li>
+                            <strong
+                                >Average Score (<span class="math"
+                                    >S<sub>n</sub> / n</span
+                                >
+                                &mdash; Law of Large Numbers):</strong
+                            >
+                            Variance decays inversely with system size:
+                            <span class="math"
+                                >Var(S<sub>n</sub>/n) = &sigma;&sup2; / n &rarr;
+                                0</span
+                            >. By the <em>Weak Law of Large Numbers (WLLN)</em>,
+                            for every
+                            <span class="math">&epsilon; &gt; 0</span>:
+                            <br />
+                            <span class="badge-math"
+                                >lim<sub>n&rarr;&infin;</sub> P(|S<sub>n</sub>/n
+                                &minus; &mu;| &ge; &epsilon;) = 0</span
+                            >.
+                            <br />
+                            The trajectories collapse toward the horizontal mean
+                            line (<span class="math">&mu; = 0</span> for
+                            Rademacher; <span class="math">&mu; = p</span> for
+                            Bernoulli). For an organization, this means the
+                            <em>per-system breach vulnerability rate</em> is
+                            strictly deterministic in the aggregate: individual
+                            random variations cancel out.
+                        </li>
+                        <li>
+                            <strong
+                                >Normalized Score (<span class="math"
+                                    >S<sub>n</sub> / &radic;n</span
+                                >
+                                &mdash; Central Limit Theorem):</strong
+                            >
+                            Dividing by
+                            <span class="math">&radic;n</span> scales the
+                            process exactly by its standard deviation. In the
+                            Rademacher model,
+                            <span class="math">E[X<sub>i</sub>] = 0</span> and
+                            <span class="math">&sigma;&sup2; = 1</span>, which
+                            implies:
+                            <br />
+                            <span class="badge-math"
+                                >E[S<sub>n</sub>/&radic;n] = 0, &emsp;
+                                Var(S<sub>n</sub>/&radic;n) = 1 &emsp; &forall;
+                                n</span
+                            >.
+                            <br />
+                            The trajectories neither explode to infinity nor
+                            collapse to a point; they stay within a bounded
+                            standard normal strip. By the
+                            <em>Central Limit Theorem</em>, the distribution
+                            converges in law to
+                            <span class="math">&Nscr;(0, 1)</span>.
+                        </li>
+                    </ul>
+
+                    <h3>2. The Rademacher Model vs. Bernoulli Model</h3>
+                    <p>
+                        &bull;
+                        <strong
+                            >Rademacher (<span class="math"
+                                >X<sub>i</sub> &isin; {-1, +1}</span
+                            >):</strong
+                        >
+                        Represents a balanced confrontation between security
+                        operations and attackers (e.g., +1 = compromise,
+                        &minus;1 = detected and mitigated). Because
+                        <span class="math">&mu; = 0</span>, the raw total
+                        <span class="math">S<sub>n</sub>/&radic;n</span> is
+                        already centered and directly satisfies the classical
+                        CLT without subtracting a drift term.<br />
+                        &bull;
+                        <strong
+                            >Bernoulli (<span class="math"
+                                >X<sub>i</sub> &isin; {0, 1}</span
+                            >):</strong
+                        >
+                        Represents pure vulnerability exploitation (+1 = system
+                        compromised, 0 = defense held). Here
+                        <span class="math">&mu; = p &gt; 0</span>, meaning
+                        <span class="math">S<sub>n</sub></span> possesses a
+                        linear deterministic drift
+                        <span class="math">n p</span>. To observe standard
+                        normal convergence, one must center the variable:
+                        <span class="math"
+                            >(S<sub>n</sub> &minus; n p) / &radic;(n p
+                            (1&minus;p)) &rarr; &Nscr;(0, 1)</span
+                        >.
+                    </p>
+
+                    <h3>
+                        3. Cybersecurity Interpretation: System Size (<span
+                            class="math"
+                            >n</span
+                        >) vs. Attacker Landscape (<span class="math">m</span>)
+                    </h3>
+                    <p>
+                        &bull;
+                        <strong
+                            >System Size (<span class="math">n</span> &mdash;
+                            Enterprise Scale):</strong
+                        >
+                        As an enterprise deploys more internal systems or
+                        defense layers (<span class="math">n &uarr;</span>), the
+                        average breach risk per machine
+                        <span class="math">S<sub>n</sub>/n</span> becomes
+                        completely predictable (LLN). However, the cumulative
+                        intrusion score
+                        <span class="math">S<sub>n</sub></span> experiences
+                        wider variance, demonstrating that defense-in-depth
+                        requires systemic controls: if individual success
+                        probability <span class="math">p &gt; 0.5</span>,
+                        cumulative breach is mathematically guaranteed.<br />
+                        &bull;
+                        <strong
+                            >Attacker Population (<span class="math">m</span>
+                            &mdash; Threat Landscape):</strong
+                        >
+                        When facing a large number of independent attackers
+                        (<span class="math">m &uarr;</span>), the law of extreme
+                        values takes over. Even if the expected score is zero or
+                        negative (favorable to defenders), the tails of the
+                        Gaussian distribution ensure that with high probability,
+                        at least one attacker among
+                        <span class="math">m</span> will achieve a statistically
+                        rare breach trajectory far into the positive tail (<span
+                            class="math"
+                            >&gt; +3&sigma;</span
+                        >).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // --- Simulation State ---
+            let modelType = "rademacher"; // 'rademacher' or 'bernoulli'
+            let N = 200;
+            let M = 100;
+            let P_val = 0.5;
+            let currentView = "total"; // 'total', 'average', 'normalized'
+
+            let trajectories = []; // Array of M arrays, each length N+1
+
+            // Canvas contexts
+            const trajCvs = document.getElementById("trajCanvas");
+            const trajCtx = trajCvs.getContext("2d");
+            const histCvs = document.getElementById("histCanvas");
+            const histCtx = histCvs.getContext("2d");
+
+            // --- Random Walk Engine ---
+            function runSimulation() {
+                trajectories = [];
+                for (let j = 0; j < M; j++) {
+                    const path = [0];
+                    let currentScore = 0;
+                    for (let i = 1; i <= N; i++) {
+                        let step = 0;
+                        if (modelType === "rademacher") {
+                            step = Math.random() < 0.5 ? 1 : -1;
+                        } else {
+                            step = Math.random() < P_val ? 1 : 0;
+                        }
+                        currentScore += step;
+                        path.push(currentScore);
+                    }
+                    trajectories.push(path);
+                }
+                renderPlots();
+                updateTableStats();
+            }
+
+            // --- Rendering Controller ---
+            function renderPlots() {
+                drawTrajectories();
+                drawHistogram();
+            }
+
+            // --- Trajectory Plot ---
+            function drawTrajectories() {
+                const w = trajCvs.width;
+                const h = trajCvs.height;
+                const padL = 60,
+                    padR = 30,
+                    padT = 30,
+                    padB = 40;
+                const plotW = w - padL - padR;
+                const plotH = h - padT - padB;
+
+                trajCtx.clearRect(0, 0, w, h);
+
+                // Determine scale bounds based on theoretical/empirical extremes
+                const mu = modelType === "rademacher" ? 0 : P_val;
+                const sigma =
+                    modelType === "rademacher"
+                        ? 1
+                        : Math.sqrt(P_val * (1 - P_val));
+
+                let minY = -3,
+                    maxY = 3;
+
+                if (currentView === "total") {
+                    const maxDev = 3.2 * sigma * Math.sqrt(N);
+                    if (modelType === "rademacher") {
+                        minY = -maxDev;
+                        maxY = maxDev;
+                    } else {
+                        minY = Math.min(0, N * mu - maxDev);
+                        maxY = N * mu + maxDev;
+                    }
+                } else if (currentView === "average") {
+                    if (modelType === "rademacher") {
+                        minY = -1.0;
+                        maxY = 1.0;
+                    } else {
+                        minY = Math.max(0, mu - 0.5);
+                        maxY = Math.min(1, mu + 0.5);
+                    }
+                } else {
+                    // normalized
+                    if (modelType === "rademacher") {
+                        minY = -3.8;
+                        maxY = 3.8;
+                    } else {
+                        minY = Math.min(
+                            0,
+                            (N * mu - 3 * sigma * Math.sqrt(N)) / Math.sqrt(N),
+                        );
+                        maxY =
+                            (N * mu + 3 * sigma * Math.sqrt(N)) / Math.sqrt(N);
+                    }
+                }
+
+                function getX(k) {
+                    return padL + (k / N) * plotW;
+                }
+                function getY(val) {
+                    return (
+                        padT + plotH - ((val - minY) / (maxY - minY)) * plotH
+                    );
+                }
+
+                // Grid lines
+                trajCtx.strokeStyle = "#e2e8f0";
+                trajCtx.lineWidth = 1;
+                trajCtx.font = "11px sans-serif";
+                trajCtx.fillStyle = "#64748b";
+                trajCtx.textAlign = "right";
+                trajCtx.textBaseline = "middle";
+
+                const yTicks = 6;
+                for (let i = 0; i <= yTicks; i++) {
+                    const val = minY + (i / yTicks) * (maxY - minY);
+                    const py = getY(val);
+                    trajCtx.beginPath();
+                    trajCtx.moveTo(padL, py);
+                    trajCtx.lineTo(w - padR, py);
+                    trajCtx.stroke();
+                    trajCtx.fillText(
+                        val.toFixed(currentView === "average" ? 2 : 1),
+                        padL - 10,
+                        py,
+                    );
+                }
+
+                // X axis ticks
+                trajCtx.textAlign = "center";
+                trajCtx.textBaseline = "top";
+                for (let k = 0; k <= N; k += Math.floor(N / 5)) {
+                    const px = getX(k);
+                    trajCtx.beginPath();
+                    trajCtx.moveTo(px, padT);
+                    trajCtx.lineTo(px, h - padB);
+                    trajCtx.stroke();
+                    trajCtx.fillText(k, px, h - padB + 10);
+                }
+
+                // Theoretical bounds envelope (+- 1 sigma)
+                trajCtx.strokeStyle = "#10b981";
+                trajCtx.lineWidth = 1.8;
+                trajCtx.setLineDash([5, 5]);
+
+                // Upper and lower envelope paths
+                trajCtx.beginPath();
+                for (let k = 1; k <= N; k++) {
+                    let upper = 0;
+                    if (currentView === "total")
+                        upper = k * mu + sigma * Math.sqrt(k);
+                    else if (currentView === "average")
+                        upper = mu + sigma / Math.sqrt(k);
+                    else upper = (k * mu + sigma * Math.sqrt(k)) / Math.sqrt(k);
+
+                    const px = getX(k),
+                        py = getY(upper);
+                    if (k === 1) trajCtx.moveTo(px, py);
+                    else trajCtx.lineTo(px, py);
+                }
+                trajCtx.stroke();
+
+                trajCtx.beginPath();
+                for (let k = 1; k <= N; k++) {
+                    let lower = 0;
+                    if (currentView === "total")
+                        lower = k * mu - sigma * Math.sqrt(k);
+                    else if (currentView === "average")
+                        lower = mu - sigma / Math.sqrt(k);
+                    else lower = (k * mu - sigma * Math.sqrt(k)) / Math.sqrt(k);
+
+                    const px = getX(k),
+                        py = getY(lower);
+                    if (k === 1) trajCtx.moveTo(px, py);
+                    else trajCtx.lineTo(px, py);
+                }
+                trajCtx.stroke();
+                trajCtx.setLineDash([]);
+
+                // Draw all M attacker trajectories
+                trajCtx.lineWidth = 1.2;
+                trajCtx.strokeStyle = "rgba(37, 99, 235, 0.28)";
+
+                for (let j = 0; j < trajectories.length; j++) {
+                    const path = trajectories[j];
+                    trajCtx.beginPath();
+                    for (let k = 0; k <= N; k++) {
+                        let val = path[k];
+                        if (currentView === "average")
+                            val = k === 0 ? mu : path[k] / k;
+                        else if (currentView === "normalized")
+                            val = k === 0 ? 0 : path[k] / Math.sqrt(k);
+
+                        const px = getX(k);
+                        const py = getY(val);
+                        if (k === 0) trajCtx.moveTo(px, py);
+                        else trajCtx.lineTo(px, py);
+                    }
+                    trajCtx.stroke();
+                }
+
+                // Theoretical Mean Line (Red)
+                trajCtx.strokeStyle = "#ef4444";
+                trajCtx.lineWidth = 2.5;
+                trajCtx.beginPath();
+                for (let k = 0; k <= N; k++) {
+                    let val = mu;
+                    if (currentView === "total") val = k * mu;
+                    else if (currentView === "average") val = mu;
+                    else val = (k * mu) / Math.sqrt(k || 1);
+
+                    const px = getX(k);
+                    const py = getY(val);
+                    if (k === 0) trajCtx.moveTo(px, py);
+                    else trajCtx.lineTo(px, py);
+                }
+                trajCtx.stroke();
+            }
+
+            // --- Terminal Histogram Plot ---
+            function drawHistogram() {
+                const w = histCvs.width;
+                const h = histCvs.height;
+                const padL = 40,
+                    padR = 20,
+                    padT = 20,
+                    padB = 30;
+                const plotW = w - padL - padR;
+                const plotH = h - padT - padB;
+
+                histCtx.clearRect(0, 0, w, h);
+
+                // Extract endpoint values
+                const endpoints = trajectories.map((path) => {
+                    const Sn = path[N];
+                    if (currentView === "total") return Sn;
+                    if (currentView === "average") return Sn / N;
+                    return Sn / Math.sqrt(N);
+                });
+
+                const mu = modelType === "rademacher" ? 0 : P_val;
+                const sigma =
+                    modelType === "rademacher"
+                        ? 1
+                        : Math.sqrt(P_val * (1 - P_val));
+
+                let thMean = 0,
+                    thSd = 1;
+                if (currentView === "total") {
+                    thMean = N * mu;
+                    thSd = sigma * Math.sqrt(N);
+                } else if (currentView === "average") {
+                    thMean = mu;
+                    thSd = sigma / Math.sqrt(N);
+                } else {
+                    thMean = (N * mu) / Math.sqrt(N);
+                    thSd = sigma;
+                }
+
+                // Bins
+                const numBins = 16;
+                const minVal = thMean - 3.5 * thSd;
+                const maxVal = thMean + 3.5 * thSd;
+                const binW = (maxVal - minVal) / numBins;
+                const bins = Array(numBins).fill(0);
+
+                endpoints.forEach((v) => {
+                    const idx = Math.floor((v - minVal) / binW);
+                    if (idx >= 0 && idx < numBins) bins[idx]++;
+                });
+
+                const maxBinCount = Math.max(...bins, 1);
+
+                // Draw Histogram Bars
+                histCtx.fillStyle = "rgba(37, 99, 235, 0.65)";
+                histCtx.strokeStyle = "#1d4ed8";
+                histCtx.lineWidth = 1;
+
+                for (let i = 0; i < numBins; i++) {
+                    const bx = padL + (i / numBins) * plotW;
+                    const bw = plotW / numBins - 2;
+                    const bH = (bins[i] / maxBinCount) * plotH;
+                    const by = padT + plotH - bH;
+                    histCtx.fillRect(bx, by, bw, bH);
+                    histCtx.strokeRect(bx, by, bw, bH);
+                }
+
+                // Draw Overlaid Gaussian Bell Curve
+                histCtx.strokeStyle = "#ef4444";
+                histCtx.lineWidth = 2.5;
+                histCtx.beginPath();
+
+                const normalizer = 1 / (thSd * Math.sqrt(2 * Math.PI));
+                const stepPx = 3;
+                let first = true;
+
+                for (let px = padL; px <= padL + plotW; px += stepPx) {
+                    const xVal =
+                        minVal + ((px - padL) / plotW) * (maxVal - minVal);
+                    const z = (xVal - thMean) / thSd;
+                    const pdf = normalizer * Math.exp(-0.5 * z * z);
+
+                    // Scale PDF peak to histogram peak
+                    const peakPdf = normalizer;
+                    const py = padT + plotH - (pdf / peakPdf) * (plotH * 0.95);
+
+                    if (first) {
+                        histCtx.moveTo(px, py);
+                        first = false;
+                    } else {
+                        histCtx.lineTo(px, py);
+                    }
+                }
+                histCtx.stroke();
+
+                // Bottom Axis labels
+                histCtx.font = "10px sans-serif";
+                histCtx.fillStyle = "#64748b";
+                histCtx.textAlign = "center";
+                histCtx.textBaseline = "top";
+                histCtx.fillText(minVal.toFixed(1), padL, h - padB + 8);
+                histCtx.fillText(
+                    thMean.toFixed(1),
+                    padL + plotW / 2,
+                    h - padB + 8,
+                );
+                histCtx.fillText(maxVal.toFixed(1), w - padR, h - padB + 8);
+            }
+
+            // --- Convergence Table Stats ---
+            function updateTableStats() {
+                const mu = modelType === "rademacher" ? 0 : P_val;
+                const sigmaSq =
+                    modelType === "rademacher" ? 1 : P_val * (1 - P_val);
+
+                // Theoretical values
+                document.getElementById("thMeanTotal").innerText = (
+                    N * mu
+                ).toFixed(2);
+                document.getElementById("thVarTotal").innerText = (
+                    N * sigmaSq
+                ).toFixed(1);
+
+                document.getElementById("thMeanAvg").innerText = mu.toFixed(3);
+                document.getElementById("thVarAvg").innerText = (
+                    sigmaSq / N
+                ).toFixed(5);
+
+                document.getElementById("thMeanNorm").innerText = (
+                    modelType === "rademacher" ? 0 : (N * mu) / Math.sqrt(N)
+                ).toFixed(2);
+                document.getElementById("thVarNorm").innerText =
+                    sigmaSq.toFixed(2);
+
+                // Calculate Empirical Variances
+                const totals = trajectories.map((p) => p[N]);
+                const avgs = totals.map((v) => v / N);
+                const norms = totals.map((v) => v / Math.sqrt(N));
+
+                function getVariance(arr) {
+                    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+                    return (
+                        arr.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) /
+                        arr.length
+                    );
+                }
+
+                document.getElementById("empVarTotal").innerText =
+                    getVariance(totals).toFixed(1);
+                document.getElementById("empVarAvg").innerText =
+                    getVariance(avgs).toFixed(5);
+                document.getElementById("empVarNorm").innerText =
+                    getVariance(norms).toFixed(2);
+            }
+
+            // --- Event Listeners ---
+            document
+                .getElementById("btnRademacher")
+                .addEventListener("click", () => {
+                    modelType = "rademacher";
+                    document
+                        .getElementById("btnRademacher")
+                        .classList.add("active");
+                    document
+                        .getElementById("btnBernoulli")
+                        .classList.remove("active");
+                    document.getElementById("sliderP").disabled = true;
+                    document.getElementById("bernProbGroup").style.opacity =
+                        "0.5";
+                    runSimulation();
+                });
+
+            document
+                .getElementById("btnBernoulli")
+                .addEventListener("click", () => {
+                    modelType = "bernoulli";
+                    document
+                        .getElementById("btnBernoulli")
+                        .classList.add("active");
+                    document
+                        .getElementById("btnRademacher")
+                        .classList.remove("active");
+                    document.getElementById("sliderP").disabled = false;
+                    document.getElementById("bernProbGroup").style.opacity =
+                        "1";
+                    runSimulation();
+                });
+
+            document
+                .getElementById("sliderN")
+                .addEventListener("input", (e) => {
+                    N = parseInt(e.target.value, 10);
+                    document.getElementById("lblN").innerText = N;
+                    runSimulation();
+                });
+
+            document
+                .getElementById("sliderM")
+                .addEventListener("input", (e) => {
+                    M = parseInt(e.target.value, 10);
+                    document.getElementById("lblM").innerText = M;
+                    runSimulation();
+                });
+
+            document
+                .getElementById("sliderP")
+                .addEventListener("input", (e) => {
+                    P_val = parseFloat(e.target.value);
+                    document.getElementById("lblP").innerText =
+                        P_val.toFixed(2);
+                    runSimulation();
+                });
+
+            document
+                .getElementById("btnRun")
+                .addEventListener("click", runSimulation);
+
+            document.querySelectorAll(".view-tab").forEach((tab) => {
+                tab.addEventListener("click", () => {
+                    document
+                        .querySelectorAll(".view-tab")
+                        .forEach((t) => t.classList.remove("active"));
+                    tab.classList.add("active");
+                    currentView = tab.getAttribute("data-view");
+
+                    const descMap = {
+                        total: "Cumulative penetration score S_k. Variance grows linearly with k, producing a diffusive random walk.",
+                        average:
+                            "Average score S_k / k. Variance decays as 1/k, demonstrating the Law of Large Numbers as paths collapse to the mean μ.",
+                        normalized:
+                            "Normalized score S_k / √k. Variance remains constant O(1), demonstrating the Central Limit Theorem bounded Gaussian envelope.",
+                    };
+                    document.getElementById("viewDescription").innerText =
+                        descMap[currentView];
+                    renderPlots();
+                });
+            });
+
+            // Simple animation loop over time
+            let animStep = 0;
+            let animTimer = null;
+            document
+                .getElementById("btnAnimate")
+                .addEventListener("click", () => {
+                    clearInterval(animTimer);
+                    runSimulation();
+                    const fullN = N;
+                    animStep = 5;
+                    animTimer = setInterval(() => {
+                        if (animStep >= fullN) {
+                            clearInterval(animTimer);
+                            N = fullN;
+                        } else {
+                            N = animStep;
+                            animStep += Math.max(5, Math.floor(fullN / 40));
+                        }
+                        renderPlots();
+                        updateTableStats();
+                    }, 50);
+                });
+
+            // Initial execution
+            runSimulation();
+        </script>
+    </body>
+</html>
