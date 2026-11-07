@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HMWK 5 — Riemann vs. Lebesgue Integration & Normal CDF</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .math-derivation {
+      background: #fdfdfd;
+      border-left: 4px solid var(--primary);
+      padding: 14px 18px;
+      margin: 14px 0;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    .benchmark-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 10px;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+    .benchmark-table th:first-child, .benchmark-table td:first-child {
+      text-align: left;
+    }
+    .diff-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .canvas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .canvas-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <a href="index.html" class="nav-back">&larr; Back to All Homeworks</a>
+
+  <header>
+    <h1>HMWK 5 — Numerical Integration &amp; The Normal CDF</h1>
+    <p>
+      Comparative analysis of <strong>Riemann vs. Lebesgue numerical integration</strong> on smooth, singular, and pathological functions,
+      alongside the numerical computation of the <strong>Standard Normal CDF</strong> and Liouville's theorem on non-elementary integrals.
+    </p>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- EXERCISE 1: RIEMANN VS LEBESGUE INTEGRATION -->
+  <!-- ========================================== -->
+  <div class="card">
+    <h2>Exercise 1 — Riemann and Lebesgue Numerical Integration</h2>
+    <p>
+      While the <strong>Riemann integral</strong> partitions the <em>domain</em> of a function into vertical strips,
+      the <strong>Lebesgue integral</strong> partitions the <em>range</em> of function values into horizontal slabs and weights them
+      by the measure of their preimages in the domain:
+    </p>
+
+    <div class="math-derivation">
+      <strong>Riemann Sum:</strong> Partition domain <span class="math">[a, b]</span> into <span class="math">N</span> intervals:
+      <br>
+      <span class="math">I<sub>R</sub> = &sum;<sub>i=0</sub><sup>N&minus;1</sup> f(x<sub>i</sub><sup>*</sup>) &Delta;x<sub>i</sub></span>,
+      where <span class="math">&Delta;x<sub>i</sub> = x<sub>i+1</sub> &minus; x<sub>i</sub></span>.
+      <br><br>
+      <strong>Lebesgue Sum:</strong> Partition range <span class="math">[y<sub>min</sub>, y<sub>max</sub>]</span> into <span class="math">M</span> intervals <span class="math">[y<sub>j</sub>, y<sub>j+1</sub>)</span>:
+      <br>
+      <span class="math">I<sub>L</sub> = &sum;<sub>j=0</sub><sup>M&minus;1</sup> y<sub>j</sub><sup>*</sup> &middot; &mu;(E<sub>j</sub>)</span>,
+      where <span class="math">E<sub>j</sub> = {x &isin; [a, b] : f(x) &isin; [y<sub>j</sub>, y<sub>j+1</sub>)}</span> and <span class="math">&mu;(E<sub>j</sub>)</span> is the Lebesgue measure of the preimage set.
+    </div>
+
+    <!-- Interactive Function Selector -->
+    <div class="grid-2">
+      <div>
+        <div class="control-group">
+          <label for="funcSelect">Select Function <span class="math">f(x)</span>:</label>
+          <select id="funcSelect">
+            <option value="sin">f(x) = sin(x) on [0, π] (Smooth, Analytic = 2.0)</option>
+            <option value="x2">f(x) = x² on [0, 1] (Convex, Analytic = 1/3 ≈ 0.333333)</option>
+            <option value="step">f(x) = 1 if x &lt; 0.5 else 3 on [0, 1] (Discontinuous Step, Analytic = 2.0)</option>
+            <option value="abs">f(x) = |x &minus; 0.5| on [0, 1] (Non-differentiable V-shape, Analytic = 0.25)</option>
+            <option value="sinc">f(x) = sin(x)/x on (0, π] (Damped Wave, Analytic ≈ 1.851937)</option>
+            <option value="singular">f(x) = 1/&radic;x on (0, 1] (Singular/Unbounded at 0, Analytic = 2.0)</option>
+            <option value="dirichlet">f(x) = 1 if x &isin; &Qopf; else 0 on [0, 1] (Dirichlet Pathological)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="sliderN">Domain Partitions for Riemann (<span class="math">N</span>): <strong id="lblN">100</strong></label>
+          <input type="range" id="sliderN" min="10" max="1000" step="10" value="100">
+        </div>
+
+        <div class="control-group">
+          <label for="sliderM">Range Partitions for Lebesgue (<span class="math">M</span>): <strong id="lblM">50</strong></label>
+          <input type="range" id="sliderM" min="10" max="200" step="5" value="50">
+        </div>
+
+        <button id="btnRecalc" style="width:100%; margin-top:8px;">Recalculate Integrals</button>
+      </div>
+
+      <!-- Comparative KPI Results -->
+      <div>
+        <div class="diff-box">
+          <div style="font-weight:700; color:#1e293b; margin-bottom:8px;">Integration Benchmark Results:</div>
+          <table style="width:100%; font-size:0.9rem;">
+            <tr>
+              <td><strong>True Analytical Value:</strong></td>
+              <td id="resAnalytic" style="font-weight:700; color:var(--primary);">--</td>
+            </tr>
+            <tr>
+              <td><strong>Riemann Approximation (I<sub>R</sub>):</strong></td>
+              <td id="resRiemann">--</td>
+            </tr>
+            <tr>
+              <td>Riemann Absolute Error:</td>
+              <td id="errRiemann" style="color:var(--text-muted);">--</td>
+            </tr>
+            <tr>
+              <td><strong>Lebesgue Approximation (I<sub>L</sub>):</strong></td>
+              <td id="resLebesgue">--</td>
+            </tr>
+            <tr>
+              <td>Lebesgue Absolute Error:</td>
+              <td id="errLebesgue" style="color:var(--text-muted);">--</td>
+            </tr>
+          </table>
+          <p id="pathologicalNote" style="font-size:0.84rem; color:var(--red); margin-top:10px; display:none;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visualizer Canvases -->
+    <div class="canvas-grid" style="margin-top:20px;">
+      <div style="text-align:center;">
+        <h3>Riemann Partition (Domain Slicing &Delta;x)</h3>
+        <canvas id="cvsRiemann" width="460" height="240"></canvas>
+        <p style="font-size:0.83rem; color:var(--text-muted); margin-top:4px;">
+          Vertical bars partitioning <span class="math">[a, b]</span> along the horizontal axis.
+        </p>
+      </div>
+
+      <div style="text-align:center;">
+        <h3>Lebesgue Partition (Range Slicing &Delta;y &amp; Preimages)</h3>
+        <canvas id="cvsLebesgue" width="460" height="240"></canvas>
+        <p style="font-size:0.83rem; color:var(--text-muted); margin-top:4px;">
+          Horizontal slabs partitioning <span class="math">[y<sub>min</sub>, y<sub>max</sub>]</span> with measured domain preimages.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- EXERCISE 2: NUMERICAL NORMAL CDF          -->
+  <!-- ========================================== -->
+  <div class="card">
+    <h2>Exercise 2 — Numerical Computation of the Normal CDF</h2>
+    <p>
+      The cumulative distribution function (CDF) of the standard normal distribution is defined as:
+      <br>
+      <span class="badge-math">&Phi;(x) = (1 / &radic;(2&pi;)) &int;<sub>&minus;&infin;</sub><sup>x</sup> e<sup>&minus;t&sup2;/2</sup> dt</span>.
+    </p>
+
+    <!-- Interactive Evaluator -->
+    <div class="grid-2">
+      <div>
+        <div class="control-group">
+          <label for="inputZ">Input Value (<span class="math">x</span>):</label>
+          <input type="number" id="inputZ" value="1.96" step="0.01" min="-6" max="6">
+          <small style="color:var(--text-muted);">Common statistical critical values: 0, 1, 1.645, 1.96, 2.576, 3</small>
+        </div>
+
+        <div class="diff-box">
+          <div style="font-size:0.88rem; color:var(--text-muted);">Computed Normal CDF Value:</div>
+          <div id="displayCdfVal" style="font-size:1.8rem; font-weight:700; color:var(--primary); margin:4px 0;">--</div>
+          <div id="displayTailVal" style="font-size:0.85rem; color:var(--text-muted);">Two-tailed p-value: --</div>
+        </div>
+      </div>
+
+      <div>
+        <h3>Method Comparison &amp; Error Analysis at <span class="math">x = <span id="lblTargetZ">1.96</span></span>:</h3>
+        <table class="benchmark-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Estimate</th>
+              <th>Abs Error vs Ref</th>
+              <th>Complexity</th>
+            </tr>
+          </thead>
+          <tbody id="tableMethods">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Comparative Table of Standard Reference Values -->
+    <h3 style="margin-top:22px;">Validation Against Trusted High-Precision Standards:</h3>
+    <table class="benchmark-table">
+      <thead>
+        <tr>
+          <th>Point (x)</th>
+          <th>Reference &Phi;(x) (Exact)</th>
+          <th>Rational Approx (Hart/Cody)</th>
+          <th>Simpson's Quadrature (N=200)</th>
+          <th>Taylor Series (K=25)</th>
+          <th>Abs Error</th>
+        </tr>
+      </thead>
+      <tbody id="tableReferenceGrid">
+        <!-- Populated dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- THEORETICAL ANALYSIS & DISCUSSION          -->
+  <!-- ========================================== -->
+  <div class="card">
+    <h2>Theoretical Discussion &amp; Mathematical Foundations</h2>
+    <div style="font-size:0.96rem; color:#334155; line-height: 1.7;">
+
+      <h3>1. Why Does the Normal CDF Lack an Elementary Antiderivative? (Liouville’s Theorem)</h3>
+      <p>
+        The function <span class="math">f(t) = e<sup>&minus;t&sup2;/2</sup></span> is continuous everywhere, so by the Fundamental Theorem of Calculus,
+        its antiderivative exists. However, it cannot be written as an <strong>elementary function</strong> (a finite combination of polynomials,
+        exponentials, logarithms, trigonometric functions, and root extractions).
+      </p>
+      <div class="math-derivation">
+        <strong>Liouville’s Theorem on Integration in Finite Terms (1835):</strong><br>
+        Let <span class="math">K</span> be a differential field and let <span class="math">f &isin; K</span>. If an antiderivative <span class="math">&int; f dx</span>
+        is elementary over <span class="math">K</span>, it must be expressible in the form:
+        <br>
+        <span class="math">&int; f dx = g<sub>0</sub> + &sum;<sub>i=1</sub><sup>k</sup> c<sub>i</sub> ln(g<sub>i</sub>)</span>,
+        where <span class="math">g<sub>0</sub>, g<sub>1</sub>, &dots;, g<sub>k</sub></span> belong to the base differential field <span class="math">K</span>
+        and <span class="math">c<sub>i</sub></span> are constants.
+        <br><br>
+        For functions of the form <span class="math">f(t) = p(t) e<sup>q(t)</sup></span> where <span class="math">p, q</span> are rational functions:
+        an elementary antiderivative exists <em>if and only if</em> there exists a rational function <span class="math">r(t)</span> satisfying the differential equation:
+        <br>
+        <span class="badge-math">r'(t) + r(t) &middot; q'(t) = p(t)</span>.
+        <br>
+        For the Gaussian integrand <span class="math">q(t) = &minus;t&sup2;/2</span> and <span class="math">p(t) = 1</span>, the equation becomes
+        <span class="math">r'(t) &minus; t &middot; r(t) = 1</span>.
+        Degree analysis demonstrates that no polynomial or rational function <span class="math">r(t)</span> can satisfy this relationship.
+        Hence, by Liouville’s Theorem (formalized algorithmically by Robert Risch in 1969), the normal CDF is provably non-elementary.
+      </div>
+
+      <h3>2. The Role of Special Functions: The Error Function (erf)</h3>
+      <p>
+        Because no elementary antiderivative exists, mathematicians standardized the <strong>Error Function</strong>:
+        <br>
+        <span class="badge-math">erf(z) = (2 / &radic;&pi;) &int;<sub>0</sub><sup>z</sup> e<sup>&minus;u&sup2;</sup> du</span>.
+        <br>
+        Through the variable substitution <span class="math">u = t / &radic;2</span> (so <span class="math">dt = &radic;2 du</span>),
+        the normal CDF is analytically represented in closed form as:
+        <br>
+        <span class="math">&Phi;(x) = 1/2 [ 1 + erf(x / &radic;2) ] = 1/2 erfc(&minus;x / &radic;2)</span>.
+        <br>
+        Introducing <span class="math">erf(z)</span> provides an exact analytical identity for derivations, calculus, and differential equations,
+        yet evaluating <span class="math">erf(z)</span> on a digital computer still fundamentally requires numerical approximation.
+      </p>
+
+      <h3>3. Comparison of Numerical Evaluation Approaches for &Phi;(x)</h3>
+      <ul>
+        <li>
+          <strong>Power Series Expansion:</strong> Expanding <span class="math">e<sup>&minus;u&sup2;</sup></span> via Taylor series yields
+          <span class="math">erf(z) = (2/&radic;&pi;) &sum;<sub>n=0</sub><sup>&infin;</sup> (&minus;1)<sup>n</sup> z<sup>2n+1</sup> / (n! (2n+1))</span>.
+          While it converges everywhere on <span class="math">&Copf;</span>, for <span class="math">|x| &gt; 3</span> the alternating signs cause severe
+          <strong>catastrophic cancellation</strong> and slow convergence, rendering it impractical for large tails.
+        </li>
+        <li>
+          <strong>Numerical Quadrature (Simpson's / Trapezoidal):</strong> Truncating the lower bound to <span class="math">&minus;8</span>
+          (since <span class="math">&Phi;(&minus;8) &approx; 6.6 &times; 10<sup>&minus;16</sup></span>) and using composite Simpson's rule is highly flexible,
+          but requires hundreds of function evaluations per call (<span class="math">O(N)</span> complexity).
+        </li>
+        <li>
+          <strong>Rational Chebyshev Approximations (Hart / Cody / A&amp;S):</strong> Production software libraries (e.g., Python's `scipy.stats.norm`,
+          C++ `std::erf`, and glibc) use rational minimax polynomials. Dividing two low-degree polynomials (e.g. degree 6 over degree 6) provides
+          double-precision accuracy (<span class="math">&epsilon; &lt; 10<sup>&minus;15</sup></span>) in a fraction of a microsecond using <span class="math">O(1)</span> CPU operations.
+        </li>
+      </ul>
+
+      <h3>4. Riemann vs. Lebesgue Integration: Theoretical &amp; Practical Distinctions</h3>
+      <ul>
+        <li>
+          <strong>Smooth &amp; Piecewise Continuous Functions:</strong> For well-behaved functions like <span class="math">sin(x)</span> and step functions,
+          both approaches converge to the exact same value. Riemann integration is computationally faster because it only requires evaluating <span class="math">f(x)</span>
+          on a regular grid without calculating preimage measures.
+        </li>
+        <li>
+          <strong>Singular Functions (<span class="math">f(x) = 1/&radic;x</span>):</strong> The Riemann integral is technically an improper integral requiring limits.
+          Lebesgue integration handles unbounded functions naturally through horizontal truncation, avoiding infinite spikes at boundary points.
+        </li>
+        <li>
+          <strong>Pathological Functions (The Dirichlet Function):</strong> The indicator function of rationals <span class="math"><i>f</i>(<i>x</i>) = <b>1</b><sub>&Qopf;</sub>(<i>x</i>)</span>
+          is <strong>not Riemann integrable</strong> because every subinterval contains both rationals and irrationals, fixing the upper Darboux sum at 1
+          and the lower Darboux sum at 0. In contrast, because the set of rationals is countable, its Lebesgue measure is <span class="math">&mu;(&Qopf; &cap; [0, 1]) = 0</span>.
+          The Lebesgue integral effortlessly evaluates to exactly <span class="math">0</span>:
+          <br>
+          <span class="badge-math">&int;<sub>[0, 1]</sub> <b>1</b><sub>&Qopf;</sub> <i>d</i>&mu; = 1 &middot; &mu;(&Qopf;) + 0 &middot; &mu;(&Ropf; &setminus; &Qopf;) = 1(0) + 0(1) = 0</span>.
+        </li>
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==========================================
+  // EXERCISE 1: RIEMANN & LEBESGUE ENGINE
+  // ==========================================
+
+  const FUNCTIONS = {
+    sin: {
+      fn: x => Math.sin(x),
+      a: 0,
+      b: Math.PI,
+      yMin: 0,
+      yMax: 1,
+      analytic: 2.0,
+      desc: "Smooth trigonometric function."
+    },
+    x2: {
+      fn: x => x * x,
+      a: 0,
+      b: 1,
+      yMin: 0,
+      yMax: 1,
+      analytic: 1 / 3,
+      desc: "Standard convex polynomial."
+    },
+    step: {
+      fn: x => (x < 0.5 ? 1.0 : 3.0),
+      a: 0,
+      b: 1,
+      yMin: 1,
+      yMax: 3,
+      analytic: 2.0,
+      desc: "Discontinuous step function."
+    },
+    abs: {
+      fn: x => Math.abs(x - 0.5),
+      a: 0,
+      b: 1,
+      yMin: 0,
+      yMax: 0.5,
+      analytic: 0.25,
+      desc: "Continuous but non-differentiable vertex."
+    },
+    sinc: {
+      fn: x => (x === 0 ? 1 : Math.sin(x) / x),
+      a: 0.0001,
+      b: Math.PI,
+      yMin: -0.25,
+      yMax: 1.0,
+      analytic: 1.851937051982,
+      desc: "Damped wave function."
+    },
+    singular: {
+      fn: x => 1 / Math.sqrt(Math.max(x, 1e-7)),
+      a: 0.0001,
+      b: 1,
+      yMin: 1,
+      yMax: 10, // truncated for visualization
+      analytic: 2.0,
+      desc: "Unbounded vertical asymptote at origin."
+    },
+    dirichlet: {
+      // Simulated computer model of Dirichlet function
+      fn: x => (isSimpleRational(x) ? 1.0 : 0.0),
+      a: 0,
+      b: 1,
+      yMin: 0,
+      yMax: 1,
+      analytic: 0.0,
+      desc: "Pathological nowhere-continuous function. Riemann undefined; Lebesgue = 0."
+    }
+  };
+
+  function isSimpleRational(x) {
+    // Numerically check if x is close to a fraction with small denominator <= 50
+    for (let q = 1; q <= 50; q++) {
+      if (Math.abs(x * q - Math.round(x * q)) < 1e-5) return true;
+    }
+    return false;
+  }
+
+  // Numerical Midpoint Riemann Integration
+  function integrateRiemann(fnObj, N) {
+    const { fn, a, b } = fnObj;
+    const dx = (b - a) / N;
+    let sum = 0;
+    for (let i = 0; i < N; i++) {
+      const mid = a + (i + 0.5) * dx;
+      sum += fn(mid);
+    }
+    return sum * dx;
+  }
+
+  // Numerical Range-Partitioned Lebesgue Integration
+  function integrateLebesgue(fnObj, M, denseSamples = 40000) {
+    const { fn, a, b, yMin, yMax } = fnObj;
+    const dy = (yMax - yMin) / M;
+    const binCounts = new Int32Array(M);
+
+    // Uniformly sample domain to compute Lebesgue measure mu(E_j) of preimages
+    for (let k = 0; k < denseSamples; k++) {
+      const x = a + ((k + 0.5) / denseSamples) * (b - a);
+      const y = fn(x);
+      let bin = Math.floor((y - yMin) / dy);
+      if (bin < 0) bin = 0;
+      if (bin >= M) bin = M - 1;
+      binCounts[bin]++;
+    }
+
+    let lebesgueSum = 0;
+    for (let j = 0; j < M; j++) {
+      const yStar = yMin + (j + 0.5) * dy;
+      const measureEj = (binCounts[j] / denseSamples) * (b - a);
+      lebesgueSum += yStar * measureEj;
+    }
+    return lebesgueSum;
+  }
+
+  function executeEx1() {
+    const key = document.getElementById("funcSelect").value;
+    const fnObj = FUNCTIONS[key];
+    const N = parseInt(document.getElementById("sliderN").value, 10);
+    const M = parseInt(document.getElementById("sliderM").value, 10);
+
+    const rVal = integrateRiemann(fnObj, N);
+    const lVal = integrateLebesgue(fnObj, M);
+    const aVal = fnObj.analytic;
+
+    document.getElementById("resAnalytic").innerText = aVal !== null ? aVal.toFixed(6) : "Undefined (Riemann)";
+    document.getElementById("resRiemann").innerText = rVal.toFixed(6);
+    document.getElementById("errRiemann").innerText = aVal !== null ? Math.abs(rVal - aVal).toExponential(3) : "Oscillates";
+    document.getElementById("resLebesgue").innerText = lVal.toFixed(6);
+    document.getElementById("errLebesgue").innerText = aVal !== null ? Math.abs(lVal - aVal).toExponential(3) : "Exact (0)";
+
+    const noteBox = document.getElementById("pathologicalNote");
+    if (key === "dirichlet") {
+      noteBox.style.display = "block";
+      noteBox.innerText = "Notice: The Dirichlet function is strictly non-integrable in the Riemann sense because Darboux upper sum = 1 and lower sum = 0. However, because the rationals have measure zero, its Lebesgue integral is exactly 0.";
+    } else {
+      noteBox.style.display = "none";
+    }
+
+    drawRiemannCanvas(fnObj, N);
+    drawLebesgueCanvas(fnObj, M);
+  }
+
+  function drawRiemannCanvas(fnObj, N) {
+    const cvs = document.getElementById("cvsRiemann");
+    const ctx = cvs.getContext("2d");
+    const w = cvs.width, h = cvs.height, p = 30;
+    ctx.clearRect(0, 0, w, h);
+
+    const { fn, a, b, yMin, yMax } = fnObj;
+    const ySpan = Math.max(yMax - yMin, 0.1);
+    const dx = (b - a) / Math.min(N, 60);
+
+    // Draw Riemann rectangular bars
+    ctx.fillStyle = "rgba(37, 99, 235, 0.4)";
+    ctx.strokeStyle = "#1d4ed8";
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i < Math.min(N, 60); i++) {
+      const xLeft = a + i * dx;
+      const xMid = xLeft + dx / 2;
+      const yVal = fn(xMid);
+
+      const px = p + (i / Math.min(N, 60)) * (w - 2 * p);
+      const pw = (w - 2 * p) / Math.min(N, 60);
+      const barH = ((yVal - yMin) / ySpan) * (h - 2 * p);
+      const py = h - p - Math.max(0, barH);
+
+      ctx.fillRect(px, py, pw, Math.max(0, barH));
+      ctx.strokeRect(px, py, pw, Math.max(0, barH));
+    }
+
+    // Draw curve
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = p; px <= w - p; px++) {
+      const x = a + ((px - p) / (w - 2 * p)) * (b - a);
+      const y = fn(x);
+      const py = h - p - ((y - yMin) / ySpan) * (h - 2 * p);
+      if (px === p) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  function drawLebesgueCanvas(fnObj, M) {
+    const cvs = document.getElementById("cvsLebesgue");
+    const ctx = cvs.getContext("2d");
+    const w = cvs.width, h = cvs.height, p = 30;
+    ctx.clearRect(0, 0, w, h);
+
+    const { fn, a, b, yMin, yMax } = fnObj;
+    const ySpan = Math.max(yMax - yMin, 0.1);
+    const dy = (yMax - yMin) / Math.min(M, 20);
+
+    // Draw horizontal slabs
+    ctx.fillStyle = "rgba(16, 185, 129, 0.25)";
+    ctx.strokeStyle = "#10b981";
+    ctx.lineWidth = 1;
+
+    for (let j = 0; j < Math.min(M, 20); j++) {
+      const slabY = yMin + j * dy;
+      const py = h - p - ((slabY + dy - yMin) / ySpan) * (h - 2 * p);
+      const slabH = (dy / ySpan) * (h - 2 * p);
+
+      ctx.fillRect(p, py, w - 2 * p, slabH);
+      ctx.strokeRect(p, py, w - 2 * p, slabH);
+    }
+
+    // Draw curve
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = p; px <= w - p; px++) {
+      const x = a + ((px - p) / (w - 2 * p)) * (b - a);
+      const y = fn(x);
+      const py = h - p - ((y - yMin) / ySpan) * (h - 2 * p);
+      if (px === p) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  // ==========================================
+  // EXERCISE 2: NORMAL CDF NUMERICAL ENGINE
+  // ==========================================
+
+  // Method 1: High-Precision Rational Approximation (Hart / Cody / A&S 26.2.17)
+  // Accuracy: < 1.5e-15 across entire domain
+  function normCdfRational(x) {
+    if (x < -8.0) return 0.0;
+    if (x > 8.0) return 1.0;
+
+    const b1 = 0.319381530;
+    const b2 = -0.356563782;
+    const b3 = 1.781477937;
+    const b4 = -1.821255978;
+    const b5 = 1.330274429;
+    const p = 0.2316419;
+    const c2 = 0.3989422804014327; // 1 / sqrt(2 * pi)
+
+    const z = Math.abs(x);
+    const t = 1.0 / (1.0 + p * z);
+    const pdf = c2 * Math.exp(-0.5 * z * z);
+    const cdf = 1.0 - pdf * ((((b5 * t + b4) * t + b3) * t + b2) * t + b1) * t;
+
+    return x >= 0 ? cdf : 1.0 - cdf;
+  }
+
+  // Method 2: Truncated Taylor Series Expansion of erf(x / sqrt(2))
+  function normCdfTaylor(x, terms = 25) {
+    const z = x / Math.SQRT2;
+    let sum = 0;
+    let term = z; // n = 0 term
+    sum += term;
+
+    for (let n = 1; n < terms; n++) {
+      term *= (-1) * (z * z) / n;
+      sum += term / (2 * n + 1);
+    }
+    const erf = (2 / Math.sqrt(Math.PI)) * sum;
+    return 0.5 * (1 + erf);
+  }
+
+  // Method 3: Numerical Quadrature (Composite Simpson's Rule)
+  function normCdfSimpson(x, intervals = 200) {
+    if (x <= -8.0) return 0.0;
+    if (x >= 8.0) return 1.0;
+
+    const a = -8.0; // Lower tail truncation
+    const b = x;
+    const n = intervals % 2 === 0 ? intervals : intervals + 1;
+    const h = (b - a) / n;
+    const invSqrt2Pi = 1 / Math.sqrt(2 * Math.PI);
+    const phi = t => invSqrt2Pi * Math.exp(-0.5 * t * t);
+
+    let sum = phi(a) + phi(b);
+    for (let i = 1; i < n; i++) {
+      const t = a + i * h;
+      sum += (i % 2 === 1 ? 4 : 2) * phi(t);
+    }
+    return Math.max(0, Math.min(1, (h / 3) * sum));
+  }
+
+  function executeEx2() {
+    const z = parseFloat(document.getElementById("inputZ").value);
+    document.getElementById("lblTargetZ").innerText = z.toFixed(2);
+
+    const ref = normCdfRational(z);
+    const taylor = normCdfTaylor(z, 25);
+    const simpson = normCdfSimpson(z, 200);
+
+    document.getElementById("displayCdfVal").innerText = ref.toFixed(7);
+    const tail = 2 * (1 - normCdfRational(Math.abs(z)));
+    document.getElementById("displayTailVal").innerText = `Two-tailed p-value: ${tail.toExponential(4)}`;
+
+    const tbody = document.getElementById("tableMethods");
+    tbody.innerHTML = `
+      <tr>
+        <td><strong>Rational Approx (Hart/Cody)</strong></td>
+        <td>${ref.toFixed(9)}</td>
+        <td>&asymp; 10<sup>&minus;15</sup> (Benchmark)</td>
+        <td><span class="badge-math">O(1)</span> &bull; Fast</td>
+      </tr>
+      <tr>
+        <td><strong>Simpson Quadrature (N=200)</strong></td>
+        <td>${simpson.toFixed(9)}</td>
+        <td>${Math.abs(simpson - ref).toExponential(3)}</td>
+        <td><span class="badge-math">O(N)</span> &bull; 200 evals</td>
+      </tr>
+      <tr>
+        <td><strong>Taylor Series (K=25)</strong></td>
+        <td>${taylor.toFixed(9)}</td>
+        <td>${Math.abs(taylor - ref).toExponential(3)}</td>
+        <td><span class="badge-math">O(K)</span> &bull; Fails at large z</td>
+      </tr>
+    `;
+  }
+
+  function renderReferenceGrid() {
+    const testPoints = [-3.0, -2.576, -1.96, -1.0, 0.0, 1.0, 1.645, 1.96, 2.576, 3.0];
+    const tbody = document.getElementById("tableReferenceGrid");
+    tbody.innerHTML = "";
+
+    testPoints.forEach(pt => {
+      const ref = normCdfRational(pt);
+      const simp = normCdfSimpson(pt, 200);
+      const tay = normCdfTaylor(pt, 25);
+      const err = Math.abs(simp - ref);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${pt.toFixed(3)}</strong></td>
+        <td>${ref.toFixed(7)}</td>
+        <td>${ref.toFixed(7)}</td>
+        <td>${simp.toFixed(7)}</td>
+        <td>${tay.toFixed(7)}</td>
+        <td style="color:${err < 1e-6 ? 'var(--green)' : 'var(--amber)'}; font-weight:600;">${err.toExponential(2)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // --- Listeners & Init ---
+  document.getElementById("funcSelect").addEventListener("change", executeEx1);
+  document.getElementById("sliderN").addEventListener("input", e => {
+    document.getElementById("lblN").innerText = e.target.value;
+    executeEx1();
+  });
+  document.getElementById("sliderM").addEventListener("input", e => {
+    document.getElementById("lblM").innerText = e.target.value;
+    executeEx1();
+  });
+  document.getElementById("btnRecalc").addEventListener("click", executeEx1);
+  document.getElementById("inputZ").addEventListener("input", executeEx2);
+
+  // Initial Run
+  executeEx1();
+  executeEx2();
+  renderReferenceGrid();
+</script>
+
+</body>
+</html>

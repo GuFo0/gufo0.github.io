@@ -314,3 +314,47 @@ canvas {
     border-radius: 50%;
     display: inline-block;
 }
+
+.math-derivation {
+    background: #fdfdfd;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    margin: 14px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+.code-snippet {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-family: "Fira Code", monospace;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin: 12px 0;
+    overflow-x: auto;
+}
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+}
+.kpi-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+}
+.kpi-val {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 2px;
+}
+.kpi-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}

@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HMWK 4 — Welford’s Algorithm & Sampling Distributions</title>
+        <link rel="stylesheet" href="style.css" />
+        <style></style>
+    </head>
+    <body>
+        <div class="container">
+            <a href="index.html" class="nav-back"
+                >&larr; Back to All Homeworks</a
+            >
+
+            <header>
+                <h1>
+                    HMWK 4 — Welford’s Algorithm &amp; Sampling Distributions
+                </h1>
+                <p>
+                    Online estimation of mean and variance, simulation of
+                    <span class="math">m</span> hackers across
+                    <span class="math">n</span> systems, and empirical analysis
+                    of sampling distributions in inferential statistics.
+                </p>
+            </header>
+
+            <!-- ========================================== -->
+            <!-- EXERCISE 1: WELFORD'S RECURRENCE FORMULAS -->
+            <!-- ========================================== -->
+            <div class="card">
+                <h2>
+                    Exercise 1 — Derivation of Welford’s Recurrence Formulas
+                </h2>
+                <p>
+                    Naive computation of variance using the textbook formula
+                    <span class="badge-math"
+                        >Var(X) = (1/n)(&sum; x<sub>i</sub>&sup2;) &minus;
+                        x&#772;&sup2;</span
+                    >
+                    is numerically unstable on digital computers: subtracting
+                    two large, nearly equal floating-point numbers causes
+                    <strong>catastrophic cancellation</strong>. Welford's
+                    algorithm solves this by updating the sum of squared
+                    differences
+                    <span class="math">SS<sub>k</sub> = M<sub>2,k</sub></span>
+                    in a numerically stable, single-pass online recurrence.
+                </p>
+
+                <h3>1. Knuth’s Recurrence Formula for the Mean</h3>
+                <div class="math-derivation">
+                    Let <span class="math">x&#772;<sub>k</sub></span> be the
+                    sample mean of the first
+                    <span class="math">k</span> observations:
+                    <br />
+                    <span class="math"
+                        >x&#772;<sub>k</sub> = (1/k) &sum;<sub>i=1</sub
+                        ><sup>k</sup> x<sub>i</sub> = (1/k) [(&sum;<sub>i=1</sub
+                        ><sup>k&minus;1</sup> x<sub>i</sub>) +
+                        x<sub>k</sub>]</span
+                    >
+                    <br />
+                    Since
+                    <span class="math"
+                        >&sum;<sub>i=1</sub><sup>k&minus;1</sup> x<sub>i</sub> =
+                        (k &minus; 1) x&#772;<sub>k&minus;1</sub></span
+                    >:
+                    <br />
+                    <span class="math"
+                        >x&#772;<sub>k</sub> = [(k &minus; 1) x&#772;<sub
+                            >k&minus;1</sub
+                        >
+                        + x<sub>k</sub>] / k = x&#772;<sub>k&minus;1</sub> +
+                        (x<sub>k</sub> &minus; x&#772;<sub>k&minus;1</sub>) /
+                        k</span
+                    >
+                </div>
+
+                <h3>
+                    2. Derivation of Welford’s Recurrence for the Sum of Squares
+                    (<span class="math">SS<sub>k</sub> = M<sub>2,k</sub></span
+                    >)
+                </h3>
+                <div class="math-derivation">
+                    Define the sum of squared differences from the current mean
+                    as:
+                    <br />
+                    <span class="math"
+                        >M<sub>2,k</sub> = &sum;<sub>i=1</sub
+                        ><sup>k</sup> (x<sub>i</sub> &minus;
+                        x&#772;<sub>k</sub>)&sup2;</span
+                    >
+                    <br /><br />
+                    Express each difference relative to the previous mean
+                    <span class="math">x&#772;<sub>k&minus;1</sub></span> using
+                    the step offset
+                    <span class="math"
+                        >&delta;<sub>k</sub> = x&#772;<sub>k</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub> = (x<sub>k</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub>) / k</span
+                    >:
+                    <br />
+                    <span class="math"
+                        >x<sub>i</sub> &minus; x&#772;<sub>k</sub> = (x<sub
+                            >i</sub
+                        >
+                        &minus; x&#772;<sub>k&minus;1</sub>) &minus; &delta;<sub
+                            >k</sub
+                        ></span
+                    >
+                    <br /><br />
+                    Splitting the sum into the first
+                    <span class="math">k &minus; 1</span> terms plus the new
+                    <span class="math">k</span>-th term:
+                    <br />
+                    <span class="math"
+                        >M<sub>2,k</sub> = &sum;<sub>i=1</sub
+                        ><sup>k&minus;1</sup> [(x<sub>i</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub>) &minus;
+                        &delta;<sub>k</sub>]&sup2; + (x<sub>k</sub> &minus;
+                        x&#772;<sub>k</sub>)&sup2;</span
+                    >
+                    <br />
+                    <span class="math"
+                        >&emsp;&emsp;= &sum;<sub>i=1</sub
+                        ><sup>k&minus;1</sup> (x<sub>i</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub>)&sup2; &minus; 2&delta;<sub
+                            >k</sub
+                        >
+                        &sum;<sub>i=1</sub><sup>k&minus;1</sup> (x<sub>i</sub>
+                        &minus; x&#772;<sub>k&minus;1</sub>) + (k &minus;
+                        1)&delta;<sub>k</sub>&sup2; + (x<sub>k</sub> &minus;
+                        x&#772;<sub>k</sub>)&sup2;</span
+                    >
+                    <br /><br />
+                    By definition of the mean, the middle sum vanishes
+                    identically:
+                    <span class="badge-math"
+                        >&sum;<sub>i=1</sub><sup>k&minus;1</sup> (x<sub>i</sub>
+                        &minus; x&#772;<sub>k&minus;1</sub>) = 0</span
+                    >. Thus:
+                    <br />
+                    <span class="math"
+                        >M<sub>2,k</sub> = M<sub>2,k&minus;1</sub> + (k &minus;
+                        1)&delta;<sub>k</sub>&sup2; + (x<sub>k</sub> &minus;
+                        x&#772;<sub>k</sub>)&sup2;</span
+                    >
+                    <br /><br />
+                    Notice that
+                    <span class="math"
+                        >x<sub>k</sub> &minus; x&#772;<sub>k</sub> = x<sub
+                            >k</sub
+                        >
+                        &minus; (x&#772;<sub>k&minus;1</sub> +
+                        &delta;<sub>k</sub>) = (x<sub>k</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub>) &minus; &delta;<sub>k</sub>
+                        = (k &minus; 1)&delta;<sub>k</sub></span
+                    >.
+                    <br />
+                    Factoring the remaining terms gives:
+                    <br />
+                    <span class="math"
+                        >(k &minus; 1)&delta;<sub>k</sub>&sup2; + [(k &minus;
+                        1)&delta;<sub>k</sub>]&sup2; = (k &minus; 1)&delta;<sub
+                            >k</sub
+                        >
+                        [&delta;<sub>k</sub> + (k &minus; 1)&delta;<sub>k</sub>]
+                        = (k &minus; 1)&delta;<sub>k</sub> [k
+                        &delta;<sub>k</sub>]</span
+                    >
+                    <br />
+                    Since
+                    <span class="math"
+                        >k &delta;<sub>k</sub> = x<sub>k</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub></span
+                    >
+                    and
+                    <span class="math"
+                        >(k &minus; 1)&delta;<sub>k</sub> = x<sub>k</sub>
+                        &minus; x&#772;<sub>k</sub></span
+                    >: <br /><br />
+                    <strong style="color: var(--primary); font-size: 1.05rem">
+                        &there4; M<sub>2,k</sub> = M<sub>2,k&minus;1</sub> +
+                        (x<sub>k</sub> &minus;
+                        x&#772;<sub>k&minus;1</sub>)(x<sub>k</sub> &minus;
+                        x&#772;<sub>k</sub>)
+                    </strong>
+                </div>
+
+                <h3>3. The 3-Line Core Implementation</h3>
+                <p>
+                    The complete streaming logic updates in exactly 3 lines of
+                    code without storing any past points:
+                </p>
+                <div class="code-snippet">
+                    // Given previous state: count k, mean, M2 (sum of squares) <br>
+                    // Process new incoming observation x:<br>
+                    const delta = x - mean;<br>
+                    mean += delta / k;<br>
+                    M2 += delta * (x - mean);<br>
+                    <br>
+                    // Unbiased sample variance with Bessel's correction:<br>
+                    const sampleVariance = k > 1 ? M2 / (k - 1) : 0;
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- EXERCISE 2: SAMPLING MEAN AND VARIANCE     -->
+            <!-- ========================================== -->
+            <div class="card">
+                <h2>Exercise 2 — Sampling Mean and Variance Simulation</h2>
+                <p>
+                    We assign each penetration attempt a score between
+                    <span class="badge-math">0 and 10</span> drawn from a
+                    <strong>Binomial distribution</strong>
+                    <span class="math">X &sim; B(K=10, p)</span>:
+                    <br />
+                    &bull; Theoretical Mean:
+                    <span class="badge-math">&mu; = 10 &middot; p</span>
+                    &nbsp;|&nbsp; &bull; Theoretical Variance:
+                    <span class="badge-math"
+                        >&sigma;&sup2; = 10 &middot; p &middot; (1 &minus;
+                        p)</span
+                    >.
+                    <br />
+                    We simulate <span class="math">m</span> independent hackers,
+                    each attacking <span class="math">n</span> systems. For each
+                    hacker, their personal sample mean
+                    <span class="math">x&#772;<sub>j</sub></span> and sample
+                    variance <span class="math">s<sub>j</sub>&sup2;</span>
+                    are tracked on-the-fly via Welford’s formulas.
+                </p>
+
+                <!-- Controls -->
+                <div class="grid-2">
+                    <div>
+                        <div class="control-group">
+                            <label for="sliderN"
+                                >Number of Systems per Hacker (<span
+                                    class="math"
+                                    >n</span
+                                >): <strong id="lblN">30</strong></label
+                            >
+                            <input
+                                type="range"
+                                id="sliderN"
+                                min="5"
+                                max="300"
+                                step="5"
+                                value="30"
+                            />
+                            <small style="color: var(--text-muted)"
+                                >Adjust <span class="math">n</span> to watch the
+                                sampling distribution narrow.</small
+                            >
+                        </div>
+
+                        <div class="control-group">
+                            <label for="sliderM"
+                                >Number of Hackers (<span class="math">m</span
+                                >): <strong id="lblM">500</strong></label
+                            >
+                            <input
+                                type="range"
+                                id="sliderM"
+                                min="50"
+                                max="2000"
+                                step="50"
+                                value="500"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="control-group">
+                            <label for="sliderP"
+                                >System Vulnerability (<span class="math"
+                                    >p</span
+                                >): <strong id="lblP">0.60</strong></label
+                            >
+                            <input
+                                type="range"
+                                id="sliderP"
+                                min="0.10"
+                                max="0.90"
+                                step="0.05"
+                                value="0.60"
+                            />
+                        </div>
+
+                        <div class="btn-group" style="margin-top: 20px">
+                            <button id="btnRerun">Rerun Experiment</button>
+                            <button id="btnSmallN" class="secondary">
+                                Test Small n (n = 8)
+                            </button>
+                            <button id="btnLargeN" class="secondary">
+                                Test Large n (n = 200)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparative Dashboard -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Theoretical Mean (&mu;)</div>
+                        <div class="kpi-val" id="thMean">6.000</div>
+                        <small style="color: var(--text-muted)"
+                            >&mu; = 10 &middot; p</small
+                        >
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            Avg. of Sample Means (x&#772;&#772;)
+                        </div>
+                        <div class="kpi-val" id="empMeanOfMeans">--</div>
+                        <small style="color: var(--green); font-weight: 600"
+                            >E[X&#772;] &approx; &mu;</small
+                        >
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            Theoretical Variance (&sigma;&sup2;)
+                        </div>
+                        <div class="kpi-val" id="thVar">2.400</div>
+                        <small style="color: var(--text-muted)"
+                            >&sigma;&sup2; = 10p(1&minus;p)</small
+                        >
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            Avg. of Sample Variances (s&#772;&sup2;)
+                        </div>
+                        <div class="kpi-val" id="empMeanOfVars">--</div>
+                        <small style="color: var(--green); font-weight: 600"
+                            >E[S&sup2;] &approx; &sigma;&sup2;</small
+                        >
+                    </div>
+                </div>
+
+                <!-- Live Histograms -->
+                <div class="grid-2">
+                    <!-- Histogram of Means -->
+                    <div style="text-align: center">
+                        <h3>
+                            Sampling Distribution of the Mean (<span
+                                class="math"
+                                >x&#772;</span
+                            >)
+                        </h3>
+                        <canvas
+                            id="histMeanCanvas"
+                            width="460"
+                            height="230"
+                        ></canvas>
+                        <p
+                            style="
+                                font-size: 0.85rem;
+                                color: var(--text-muted);
+                                margin-top: 4px;
+                            "
+                        >
+                            Empirical histogram of
+                            <span class="math">m</span> hacker means vs.
+                            Theoretical Standard Error
+                            <span class="math"
+                                >&sigma; / &radic;n =
+                                <strong id="lblSE">--</strong></span
+                            >.
+                        </p>
+                    </div>
+
+                    <!-- Histogram of Variances -->
+                    <div style="text-align: center">
+                        <h3>
+                            Sampling Distribution of the Variance (<span
+                                class="math"
+                                >s&sup2;</span
+                            >)
+                        </h3>
+                        <canvas
+                            id="histVarCanvas"
+                            width="460"
+                            height="230"
+                        ></canvas>
+                        <p
+                            style="
+                                font-size: 0.85rem;
+                                color: var(--text-muted);
+                                margin-top: 4px;
+                            "
+                        >
+                            Empirical histogram of
+                            <span class="math">m</span> Welford sample variances
+                            centered at <span class="math">&sigma;&sup2;</span>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- INFERENTIAL STATISTICS & DISCUSSION        -->
+            <!-- ========================================== -->
+            <div class="card">
+                <h2>Inferential Statistics &amp; Cybersecurity Discussion</h2>
+                <div
+                    style="font-size: 0.96rem; color: #334155; line-height: 1.7"
+                >
+                    <h3>
+                        1. What Conclusions Can You Draw from These Comparisons?
+                    </h3>
+                    <p>
+                        Across the <span class="math">m</span> hackers, the
+                        grand average of sample means (<span class="math"
+                            >x&#772;&#772;</span
+                        >) coincides with the theoretical mean
+                        <span class="math">&mu;</span>, and the grand average of
+                        sample variances (<span class="math">s&#772;&sup2;</span
+                        >) coincides with the theoretical population variance
+                        <span class="math">&sigma;&sup2;</span>.
+                        <br />
+                        Mathematically, this confirms that both statistics are
+                        <strong>unbiased estimators</strong>:
+                        <br />
+                        &bull; <span class="badge-math">E[X&#772;] = &mu;</span>
+                        <br />
+                        &bull;
+                        <span class="badge-math"
+                            >E[S&sup2;] = &sigma;&sup2;</span
+                        >
+                        (guaranteed by Bessel's correction factor
+                        <span class="math">1 / (n &minus; 1)</span> inside
+                        Welford's formula).
+                    </p>
+
+                    <h3>
+                        2. Why Are These Results Fundamental in Inferential
+                        Statistics?
+                    </h3>
+                    <p>
+                        In real-world security audits, an analyst
+                        <em>never</em> knows the ground-truth distribution
+                        parameters (<span class="math">&mu;, &sigma;&sup2;</span
+                        >) of a hacker collective or enterprise defense.
+                        Inferential statistics allows us to estimate these
+                        global population parameters from a finite audit sample
+                        of <span class="math">n</span> penetration events.
+                        Because Welford's sample variance is unbiased, security
+                        analysts can reliably construct
+                        <strong>Confidence Intervals</strong> and test
+                        hypotheses regarding defense posture without systematic
+                        under- or over-estimation.
+                    </p>
+
+                    <h3>
+                        3. How Does System Size (<span class="math">n</span>)
+                        Affect Variability?
+                    </h3>
+                    <p>
+                        Adjusting the slider for
+                        <span class="math">n</span> visually demonstrates the
+                        Law of Large Numbers on both sampling distributions:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Variability of Sampling Means:</strong> The
+                            variance of the sample mean is given by
+                            <span class="math"
+                                >Var(X&#772;) = &sigma;&sup2; / n</span
+                            >, corresponding to a
+                            <strong>Standard Error (SE)</strong> of
+                            <span class="math">SE = &sigma; / &radic;n</span>.
+                            When <span class="math">n = 8</span>, individual
+                            hacker scores fluctuate widely between 3.5 and 8.5.
+                            When <span class="math">n = 200</span>, the
+                            distribution contracts into a sharp spike tightly
+                            clustered around
+                            <span class="math">&mu; = 6.0</span>.
+                        </li>
+                        <li>
+                            <strong>Variability of Sampling Variances:</strong>
+                            The variance of the sample variance scales
+                            asymptotically as
+                            <span class="math"
+                                >Var(S&sup2;) &approx; [2&sigma;<sup>4</sup> +
+                                (&kappa; &minus; 3)&sigma;<sup>4</sup>] /
+                                n</span
+                            >
+                            (where <span class="math">&kappa;</span> is
+                            kurtosis). Increasing
+                            <span class="math">n</span> eliminates estimation
+                            noise in variance, preventing security auditors from
+                            misinterpreting random penetration variance as an
+                            operational shift in adversary capabilities.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // --- Simulation State ---
+            let N = 30; // Systems tested per hacker
+            let M = 500; // Number of hackers
+            let P_val = 0.6; // Binomial success probability
+            const K = 10; // Maximum penetration score per system (0 to 10)
+
+            // Canvas elements
+            const cvsMean = document.getElementById("histMeanCanvas");
+            const ctxMean = cvsMean.getContext("2d");
+            const cvsVar = document.getElementById("histVarCanvas");
+            const ctxVar = cvsVar.getContext("2d");
+
+            // --- Binomial Pseudo-Random Generator B(10, p) ---
+            function sampleBinomialScore(p) {
+                let score = 0;
+                for (let k = 0; k < K; k++) {
+                    if (Math.random() < p) score++;
+                }
+                return score;
+            }
+
+            // --- Welford Hacker Simulator ---
+            function runExperiment() {
+                const sampleMeans = new Float64Array(M);
+                const sampleVars = new Float64Array(M);
+
+                for (let j = 0; j < M; j++) {
+                    let count = 0;
+                    let mean = 0.0;
+                    let M2 = 0.0;
+
+                    // Trajectory of N systems for hacker j
+                    for (let i = 1; i <= N; i++) {
+                        const x = sampleBinomialScore(P_val);
+                        count++;
+
+                        // --- Core 3-Line Welford Recurrence ---
+                        const delta = x - mean;
+                        mean += delta / count;
+                        M2 += delta * (x - mean);
+                    }
+
+                    sampleMeans[j] = mean;
+                    sampleVars[j] = count > 1 ? M2 / (count - 1) : 0.0;
+                }
+
+                // Theoretical values
+                const thMeanVal = K * P_val;
+                const thVarVal = K * P_val * (1.0 - P_val);
+                const standardError = Math.sqrt(thVarVal / N);
+
+                // Compute grand averages across all M hackers
+                let sumMeans = 0.0,
+                    sumVars = 0.0;
+                for (let j = 0; j < M; j++) {
+                    sumMeans += sampleMeans[j];
+                    sumVars += sampleVars[j];
+                }
+                const grandMean = sumMeans / M;
+                const grandVar = sumVars / M;
+
+                // Update KPI UI
+                document.getElementById("thMean").innerText =
+                    thMeanVal.toFixed(3);
+                document.getElementById("thVar").innerText =
+                    thVarVal.toFixed(3);
+                document.getElementById("empMeanOfMeans").innerText =
+                    grandMean.toFixed(3);
+                document.getElementById("empMeanOfVars").innerText =
+                    grandVar.toFixed(3);
+                document.getElementById("lblSE").innerText =
+                    standardError.toFixed(3);
+
+                // Draw histograms
+                drawHistogram(
+                    ctxMean,
+                    cvsMean,
+                    sampleMeans,
+                    thMeanVal,
+                    standardError,
+                    "#2563eb",
+                    "Mean Score",
+                );
+
+                // For variance distribution, theoretical spread is approx sqrt(2*var^2 / n)
+                const varSpread = Math.sqrt((2.0 * Math.pow(thVarVal, 2)) / N);
+                drawHistogram(
+                    ctxVar,
+                    cvsVar,
+                    sampleVars,
+                    thVarVal,
+                    varSpread,
+                    "#10b981",
+                    "Sample Variance",
+                );
+            }
+
+            // --- General Histogram Renderer with Theoretical Normal Overlay ---
+            function drawHistogram(
+                ctx,
+                cvs,
+                data,
+                center,
+                spread,
+                color,
+                label,
+            ) {
+                const w = cvs.width;
+                const h = cvs.height;
+                const padL = 40,
+                    padR = 20,
+                    padT = 20,
+                    padB = 30;
+                const plotW = w - padL - padR;
+                const plotH = h - padT - padB;
+
+                ctx.clearRect(0, 0, w, h);
+
+                const numBins = 24;
+                const minVal = Math.max(0, center - 3.5 * spread);
+                const maxVal = center + 3.5 * spread;
+                const binW = (maxVal - minVal) / numBins;
+                const bins = new Int32Array(numBins);
+
+                for (let i = 0; i < data.length; i++) {
+                    const idx = Math.floor((data[i] - minVal) / binW);
+                    if (idx >= 0 && idx < numBins) bins[idx]++;
+                }
+
+                let maxBin = 1;
+                for (let i = 0; i < numBins; i++) {
+                    if (bins[i] > maxBin) maxBin = bins[i];
+                }
+
+                // Draw Bars
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.65;
+                for (let i = 0; i < numBins; i++) {
+                    const bx = padL + (i / numBins) * plotW;
+                    const bW = plotW / numBins - 2;
+                    const bH = (bins[i] / maxBin) * (plotH * 0.9);
+                    const by = padT + plotH - bH;
+                    ctx.fillRect(bx, by, bW, bH);
+                }
+                ctx.globalAlpha = 1.0;
+
+                // Draw Theoretical Gaussian PDF Curve
+                ctx.strokeStyle = "#ef4444";
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                let first = true;
+
+                for (let px = padL; px <= padL + plotW; px += 3) {
+                    const xVal =
+                        minVal + ((px - padL) / plotW) * (maxVal - minVal);
+                    const z = (xVal - center) / (spread || 1);
+                    const pdf = Math.exp(-0.5 * z * z);
+                    const py = padT + plotH - pdf * (plotH * 0.9);
+
+                    if (first) {
+                        ctx.moveTo(px, py);
+                        first = false;
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+                ctx.stroke();
+
+                // Axis Labels
+                ctx.font = "10px sans-serif";
+                ctx.fillStyle = "#64748b";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                ctx.fillText(minVal.toFixed(1), padL, h - padB + 8);
+                ctx.fillText(center.toFixed(2), padL + plotW / 2, h - padB + 8);
+                ctx.fillText(maxVal.toFixed(1), w - padR, h - padB + 8);
+            }
+
+            // --- Listeners & Controls ---
+            document
+                .getElementById("sliderN")
+                .addEventListener("input", (e) => {
+                    N = parseInt(e.target.value, 10);
+                    document.getElementById("lblN").innerText = N;
+                    runExperiment();
+                });
+
+            document
+                .getElementById("sliderM")
+                .addEventListener("input", (e) => {
+                    M = parseInt(e.target.value, 10);
+                    document.getElementById("lblM").innerText = M;
+                    runExperiment();
+                });
+
+            document
+                .getElementById("sliderP")
+                .addEventListener("input", (e) => {
+                    P_val = parseFloat(e.target.value);
+                    document.getElementById("lblP").innerText =
+                        P_val.toFixed(2);
+                    runExperiment();
+                });
+
+            document
+                .getElementById("btnRerun")
+                .addEventListener("click", runExperiment);
+
+            document
+                .getElementById("btnSmallN")
+                .addEventListener("click", () => {
+                    N = 8;
+                    document.getElementById("sliderN").value = 8;
+                    document.getElementById("lblN").innerText = 8;
+                    runExperiment();
+                });
+
+            document
+                .getElementById("btnLargeN")
+                .addEventListener("click", () => {
+                    N = 200;
+                    document.getElementById("sliderN").value = 200;
+                    document.getElementById("lblN").innerText = 200;
+                    runExperiment();
+                });
+
+            // Run on page load
+            runExperiment();
+        </script>
+    </body>
+</html>
