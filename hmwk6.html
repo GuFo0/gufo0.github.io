@@ -1,0 +1,1825 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HMWK 6 — Statistical Independence</title>
+        <link rel="stylesheet" href="style.css" />
+        <style>
+            .dataset-editor {
+                font-family: "Fira Code", "Consolas", monospace;
+                font-size: 0.88rem;
+                line-height: 1.45;
+                min-height: 210px;
+                white-space: pre;
+                overflow-x: auto;
+            }
+            .inline-check {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500;
+                font-size: 0.9rem;
+                margin: 6px 0;
+                cursor: pointer;
+            }
+            .inline-check input[type="checkbox"] {
+                width: auto;
+                margin: 0;
+                padding: 0;
+                cursor: pointer;
+            }
+            .status-banner {
+                border-radius: 8px;
+                padding: 14px 18px;
+                margin-top: 14px;
+                font-size: 0.95rem;
+                line-height: 1.65;
+                border: 1px solid var(--border);
+                background: #f8fafc;
+            }
+            .status-banner.dependent {
+                background: #eff6ff;
+                border-color: #93c5fd;
+                border-left: 5px solid var(--primary);
+            }
+            .status-banner.independent {
+                background: #ecfdf5;
+                border-color: #a7f3d0;
+                border-left: 5px solid var(--green);
+            }
+            .status-banner.error {
+                background: #fef2f2;
+                border-color: #fecaca;
+                border-left: 5px solid var(--red);
+                color: #7f1d1d;
+            }
+            .matrix-scroll {
+                overflow-x: auto;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                margin-top: 10px;
+            }
+            .matrix-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.88rem;
+                text-align: right;
+            }
+            .matrix-table th,
+            .matrix-table td {
+                padding: 9px 12px;
+                border-bottom: 1px solid var(--border);
+                border-right: 1px solid #e2e8f0;
+                vertical-align: middle;
+            }
+            .matrix-table th:last-child,
+            .matrix-table td:last-child {
+                border-right: none;
+            }
+            .matrix-table th {
+                background: #f1f5f9;
+                color: #0f172a;
+                font-weight: 600;
+                text-align: right;
+                white-space: nowrap;
+            }
+            .matrix-table th:first-child,
+            .matrix-table td:first-child {
+                text-align: left;
+                font-weight: 600;
+                background: #f8fafc;
+                color: #1e293b;
+                white-space: nowrap;
+            }
+            .matrix-table tr.marginal-row td,
+            .matrix-table td.marginal-col,
+            .matrix-table th.marginal-col {
+                background: #eef2ff;
+                font-weight: 700;
+                color: #1e3a8a;
+            }
+            .matrix-table tr.marginal-row td:first-child {
+                background: #e0e7ff;
+            }
+            .cell-sub {
+                display: block;
+                font-size: 0.77rem;
+                color: var(--text-muted);
+                font-weight: 400;
+            }
+            .canvas-box {
+                text-align: center;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 12px;
+            }
+            .sub-pill {
+                display: inline-block;
+                font-size: 0.8rem;
+                font-weight: 600;
+                background: #f1f5f9;
+                color: #334155;
+                border: 1px solid #cbd5e1;
+                padding: 3px 9px;
+                border-radius: 14px;
+                margin-right: 6px;
+                margin-top: 6px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <a href="index.html" class="nav-back"
+                >&larr; Back to Portfolio Index</a
+            >
+
+            <header>
+                <h1>HMWK 6 — Statistical Independence</h1>
+                <p>
+                    Programmatic construction of the bivariate contingency table
+                    from any dataset <span class="math">(X, F)</span>, marginal
+                    and conditional frequencies, expected frequencies under
+                    independence, Pearson’s
+                    <span class="math">&chi;&sup2;</span> test (with exact
+                    <span class="math">p</span>-value), and theoretical
+                    interpretation distinguishing association from causality.
+                </p>
+            </header>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 1: DATASET (X, F) INPUT                       -->
+            <!-- ===================================================== -->
+            <div class="card">
+                <h2>
+                    1. Bivariate Dataset <span class="math">(X, F)</span> Input
+                </h2>
+                <p>
+                    Select a sample dataset, upload a CSV/TXT file, or paste any
+                    list of bivariate observations
+                    <span class="math">(x<sub>i</sub>, f<sub>i</sub>)</span>
+                    (separated by commas, semicolons, tabs, or spaces).
+                </p>
+
+                <div class="grid-2">
+                    <!-- Left: Presets & Options -->
+                    <div>
+                        <div class="control-group">
+                            <label for="presetSelect"
+                                >Example Datasets
+                                <span class="math">(X, F)</span>:</label
+                            >
+                            <select id="presetSelect">
+                                <option value="dependent">
+                                    1. Dependent: Attack Vector (X) vs. Defense
+                                    Outcome (F)
+                                </option>
+                                <option value="independent">
+                                    2. Independent: Server Zone (X) vs. Network
+                                    Protocol (F)
+                                </option>
+                                <option value="confounded">
+                                    3. Confounded Association: Port-Scan Alerts
+                                    (X) vs. OS Crash (F)
+                                </option>
+                                <option value="numeric">
+                                    4. Continuous Numeric: CPU Load % (X) vs.
+                                    Response Time ms (F)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="alphaSelect"
+                                >Significance Level (<span class="math"
+                                    >&alpha;</span
+                                >):</label
+                            >
+                            <select id="alphaSelect">
+                                <option value="0.10">
+                                    &alpha; = 0.10 (90% Confidence)
+                                </option>
+                                <option value="0.05" selected>
+                                    &alpha; = 0.05 (95% Confidence)
+                                </option>
+                                <option value="0.01">
+                                    &alpha; = 0.01 (99% Confidence)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="fileUpload"
+                                >Upload Dataset File (<span class="math"
+                                    >.csv, .tsv, .txt</span
+                                >):</label
+                            >
+                            <input
+                                type="file"
+                                id="fileUpload"
+                                accept=".csv,.tsv,.txt"
+                                style="padding: 7px; background: #ffffff"
+                            />
+                        </div>
+
+                        <label class="inline-check">
+                            <input type="checkbox" id="chkHeader" checked />
+                            First line is variable header (<span class="math"
+                                >X, F</span
+                            >)
+                        </label>
+
+                        <label class="inline-check">
+                            <input type="checkbox" id="chkAutoBin" checked />
+                            Auto-bin continuous numeric columns into 3 intervals
+                            (if &gt; 8 unique values)
+                        </label>
+                    </div>
+
+                    <!-- Right: Raw Data Editor -->
+                    <div>
+                        <div class="control-group" style="margin-bottom: 8px">
+                            <label for="rawInput"
+                                >Raw Bivariate Pairs
+                                <span class="math"
+                                    >(x<sub>i</sub>, f<sub>i</sub>)</span
+                                >:</label
+                            >
+                            <textarea
+                                id="rawInput"
+                                class="dataset-editor"
+                                spellcheck="false"
+                                placeholder="X, F&#10;Phishing, Blocked&#10;Zero-Day, Breached"
+                            ></textarea>
+                        </div>
+
+                        <div class="btn-group" style="margin-top: 6px">
+                            <button id="btnAnalyze" style="flex: 1">
+                                Compute Contingency Table &amp; &chi;&sup2;
+                            </button>
+                            <button id="btnClear" class="secondary">
+                                Clear
+                            </button>
+                        </div>
+
+                        <div id="parseMeta" style="margin-top: 8px"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 2: CHI-SQUARE RESULTS & INTERPRETATION        -->
+            <!-- ===================================================== -->
+            <div class="card">
+                <h2>2. Chi-Square Test &amp; Independence Decision</h2>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            Sample Size &amp; Degrees of Freedom
+                        </div>
+                        <div class="kpi-val" id="kpiN">--</div>
+                        <div class="cell-sub" id="kpiDims">
+                            Table: -- | df = --
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            Chi-Square Statistic (<span class="math"
+                                >&chi;&sup2;</span
+                            >)
+                        </div>
+                        <div class="kpi-val" id="kpiChi2">--</div>
+                        <div class="cell-sub" id="kpiCrit">
+                            Critical &chi;&sup2;(&alpha;): --
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">
+                            Exact <span class="math">p</span>-Value
+                        </div>
+                        <div class="kpi-val" id="kpiPval">--</div>
+                        <div class="cell-sub" id="kpiDecision">
+                            Decision: --
+                        </div>
+                    </div>
+                </div>
+
+                <div id="verdictBox" class="status-banner">
+                    Waiting for valid bivariate dataset...
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 3: PROGRAMMATIC TABLES                        -->
+            <!-- ===================================================== -->
+            <div class="card">
+                <h2>
+                    3. Contingency, Marginal, Conditional &amp; Expected
+                    Frequency Tables
+                </h2>
+
+                <!-- 3A. Observed Joint & Marginal Frequencies -->
+                <h3>3A. Contingency Table &amp; Marginal Frequencies</h3>
+                <p
+                    style="
+                        margin-top: 4px;
+                        margin-bottom: 6px;
+                        font-size: 0.93rem;
+                    "
+                >
+                    Joint absolute counts
+                    <span class="math">n<sub>ij</sub></span> and joint relative
+                    frequencies
+                    <span class="math">f<sub>ij</sub> = n<sub>ij</sub> / N</span
+                    >, with row marginals
+                    <span class="math">n<sub>i&bull;</sub></span> and column
+                    marginals <span class="math">n<sub>&bull;j</sub></span
+                    >.
+                </p>
+                <div id="wrapObserved" class="matrix-scroll"></div>
+
+                <!-- 3B & 3C. Conditional Frequencies -->
+                <div class="grid-2" style="margin-top: 22px">
+                    <div>
+                        <h3>
+                            3B. Conditional Frequencies
+                            <span class="math">f(F | X = x<sub>i</sub>)</span>
+                        </h3>
+                        <p
+                            style="
+                                margin-top: 4px;
+                                margin-bottom: 6px;
+                                font-size: 0.9rem;
+                            "
+                        >
+                            Calculated as
+                            <span class="badge-math"
+                                >n<sub>ij</sub> / n<sub>i&bull;</sub></span
+                            >. Under independence, every row matches the bottom
+                            <strong
+                                >Marginal <span class="math">f(F)</span></strong
+                            >.
+                        </p>
+                        <div id="wrapCondFX" class="matrix-scroll"></div>
+                    </div>
+
+                    <div>
+                        <h3>
+                            3C. Conditional Frequencies
+                            <span class="math">f(X | F = f<sub>j</sub>)</span>
+                        </h3>
+                        <p
+                            style="
+                                margin-top: 4px;
+                                margin-bottom: 6px;
+                                font-size: 0.9rem;
+                            "
+                        >
+                            Calculated as
+                            <span class="badge-math"
+                                >n<sub>ij</sub> / n<sub>&bull;j</sub></span
+                            >. Under independence, every column matches the
+                            right
+                            <strong
+                                >Marginal <span class="math">f(X)</span></strong
+                            >.
+                        </p>
+                        <div id="wrapCondXF" class="matrix-scroll"></div>
+                    </div>
+                </div>
+
+                <!-- 3D. Expected Frequencies Under Independence -->
+                <div style="margin-top: 22px">
+                    <h3>
+                        3D. Expected Frequencies Under Independence (<span
+                            class="math"
+                            >E<sub>ij</sub></span
+                        >) &amp; <span class="math">&chi;&sup2;</span> Terms
+                    </h3>
+                    <p
+                        style="
+                            margin-top: 4px;
+                            margin-bottom: 6px;
+                            font-size: 0.93rem;
+                        "
+                    >
+                        Expected count
+                        <span class="badge-math"
+                            >E<sub>ij</sub> = (n<sub>i&bull;</sub> &middot;
+                            n<sub>&bull;j</sub>) / N</span
+                        >, compared against observed
+                        <span class="math">O<sub>ij</sub></span
+                        >, and each cell’s contribution
+                        <span class="badge-math"
+                            >(O<sub>ij</sub> &minus; E<sub>ij</sub>)&sup2; /
+                            E<sub>ij</sub></span
+                        >
+                        summing to <span class="math">&chi;&sup2;</span>.
+                    </p>
+                    <div id="wrapExpected" class="matrix-scroll"></div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 4: VISUAL DIAGNOSTICS                         -->
+            <!-- ===================================================== -->
+            <div class="card">
+                <h2>4. Visual Verification of Independence</h2>
+                <div class="grid-2">
+                    <div class="canvas-box">
+                        <h3 style="margin-top: 0">
+                            Conditional Profiles
+                            <span class="math">f(F | X)</span> vs. Marginal
+                            <span class="math">f(F)</span>
+                        </h3>
+                        <canvas
+                            id="cvsConditional"
+                            width="560"
+                            height="290"
+                        ></canvas>
+                        <div id="legendConditional" class="legend"></div>
+                        <p
+                            style="
+                                font-size: 0.84rem;
+                                color: var(--text-muted);
+                                margin-top: 8px;
+                                margin-bottom: 0;
+                            "
+                        >
+                            Vertical dashed lines project the Marginal
+                            <span class="math">f(F)</span> baseline. When
+                            <span class="math">X</span> and
+                            <span class="math">F</span> are independent, all
+                            rows align with these boundaries.
+                        </p>
+                    </div>
+
+                    <div class="canvas-box">
+                        <h3 style="margin-top: 0">
+                            Chi-Square Distribution (<span class="math"
+                                >&chi;&sup2;<sub>df</sub></span
+                            >) &amp; Rejection Tail
+                        </h3>
+                        <canvas id="cvsChi2" width="560" height="290"></canvas>
+                        <div class="legend">
+                            <span class="legend-item"
+                                ><span
+                                    class="legend-dot"
+                                    style="background: #1e293b"
+                                ></span>
+                                Null Density
+                                <span class="math"
+                                    >&chi;&sup2;<sub>df</sub></span
+                                ></span
+                            >
+                            <span class="legend-item"
+                                ><span
+                                    class="legend-dot"
+                                    style="
+                                        background: rgba(239, 68, 68, 0.35);
+                                        border: 1px solid #ef4444;
+                                    "
+                                ></span>
+                                Rejection Region (<span class="math"
+                                    >&alpha;</span
+                                >)</span
+                            >
+                            <span class="legend-item"
+                                ><span
+                                    class="legend-dot"
+                                    style="background: #2563eb"
+                                ></span>
+                                Observed
+                                <span class="math">&chi;&sup2;</span></span
+                            >
+                        </div>
+                        <p
+                            style="
+                                font-size: 0.84rem;
+                                color: var(--text-muted);
+                                margin-top: 8px;
+                                margin-bottom: 0;
+                            "
+                        >
+                            If the observed
+                            <span class="math">&chi;&sup2;</span> falls inside
+                            the shaded upper tail (<span class="math"
+                                >p &lt; &alpha;</span
+                            >), the null hypothesis of independence is rejected.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 5: THEORETICAL DISCUSSION & CONCLUSIONS       -->
+            <!-- ===================================================== -->
+            <div class="card">
+                <h2>
+                    5. Theoretical Concepts, Interpretation &amp; Association
+                    vs. Causality
+                </h2>
+                <div
+                    style="
+                        font-size: 0.96rem;
+                        color: #334155;
+                        line-height: 1.72;
+                    "
+                >
+                    <h3>1. Independence in Probability vs. Statistics</h3>
+                    <div class="math-derivation">
+                        <strong>In Probability Theory:</strong><br />
+                        Two events <span class="math">A</span> and
+                        <span class="math">B</span> are independent (<span
+                            class="math"
+                            >A &perp; B</span
+                        >) if
+                        <span class="badge-math"
+                            >P(A &cap; B) = P(A) &middot; P(B)</span
+                        >, which for <span class="math">P(B) &gt; 0</span> is
+                        equivalent to
+                        <span class="math">P(A | B) = P(A)</span> (knowing
+                        <span class="math">B</span> does not alter the
+                        probability of <span class="math">A</span>). For two
+                        discrete random variables
+                        <span class="math">X</span> and
+                        <span class="math">F</span>, independence means their
+                        joint distribution factorizes into the product of their
+                        marginals for every pair
+                        <span class="math">(x, f)</span>:
+                        <br />
+                        <span class="badge-math"
+                            >P(X = x, F = f) = P(X = x) &middot; P(F = f)</span
+                        >
+                        &nbsp;&hArr;&nbsp;
+                        <span class="badge-math"
+                            >P(F = f | X = x) = P(F = f)</span
+                        >.
+                        <br />
+                        <em>Important distinctions:</em> Independence is
+                        <strong>not</strong> mutual exclusivity (disjoint
+                        positive-probability events satisfy
+                        <span class="math">P(A &cap; B) = 0 &ne; P(A)P(B)</span>
+                        and are strongly dependent), and it is stronger than
+                        zero covariance (<span class="math">Cov(X, F) = 0</span>
+                        only rules out linear correlation, not nonlinear
+                        dependence). <br /><br />
+                        <strong>In Statistics:</strong><br />
+                        With a finite sample of
+                        <span class="math">N</span> observations, empirical
+                        relative frequencies
+                        <span class="math"
+                            >f<sub>ij</sub> = n<sub>ij</sub> / N</span
+                        >
+                        rarely satisfy
+                        <span class="math"
+                            >f<sub>ij</sub> = f<sub>i&bull;</sub> &middot; f<sub
+                                >&bull;j</sub
+                            ></span
+                        >
+                        exactly due to random sampling fluctuation. Therefore,
+                        we formulate independence as a null hypothesis
+                        <span class="math"
+                            >H<sub>0</sub>: p<sub>ij</sub> = p<sub>i&bull;</sub>
+                            &middot; p<sub>&bull;j</sub></span
+                        >
+                        for all cells <span class="math">(i, j)</span>. Under
+                        <span class="math">H<sub>0</sub></span
+                        >, the expected frequency is
+                        <span class="badge-math"
+                            >E<sub>ij</sub> = (n<sub>i&bull;</sub> &middot;
+                            n<sub>&bull;j</sub>) / N</span
+                        >, and discrepancies are summarized by Pearson’s
+                        statistic:
+                        <br />
+                        <span class="badge-math"
+                            >&chi;&sup2; = &sum;<sub>i=1</sub
+                            ><sup>r</sup> &sum;<sub>j=1</sub><sup>c</sup> (O<sub
+                                >ij</sub
+                            >
+                            &minus; E<sub>ij</sub>)&sup2; / E<sub>ij</sub></span
+                        >, which follows approximately a
+                        <span class="math">&chi;&sup2;</span> distribution with
+                        <span class="badge-math"
+                            >df = (r &minus; 1)(c &minus; 1)</span
+                        >
+                        degrees of freedom.
+                    </div>
+
+                    <h3>
+                        2. Interpreting the Results: Independence vs. Dependence
+                    </h3>
+                    <ul>
+                        <li>
+                            <strong
+                                >When <span class="math">X</span> and
+                                <span class="math">F</span> are Statistically
+                                Dependent (e.g., Dataset 1):</strong
+                            >
+                            The conditional distributions
+                            <span class="math">f(F | X = x<sub>i</sub>)</span>
+                            differ substantially across rows and deviate from
+                            the marginal <span class="math">f(F)</span> (for
+                            example, Brute-Force attacks are mostly Blocked at
+                            74.3%, whereas Zero-Day exploits are mostly Breached
+                            at 65.0%). Large differences
+                            <span class="math"
+                                >|O<sub>ij</sub> &minus; E<sub>ij</sub>|</span
+                            >
+                            produce a high
+                            <span class="math">&chi;&sup2; = 70.23</span> (<span
+                                class="math"
+                                >df = 6</span
+                            >,
+                            <span class="math"
+                                >p = 3.67 &times; 10<sup>&minus;13</sup> &lt;
+                                &alpha;</span
+                            >), so we
+                            <strong
+                                >reject
+                                <span class="math">H<sub>0</sub></span></strong
+                            >
+                            and conclude the variables are statistically
+                            dependent.
+                        </li>
+                        <li>
+                            <strong
+                                >When <span class="math">X</span> and
+                                <span class="math">F</span> are Consistent with
+                                Independence (e.g., Dataset 2):</strong
+                            >
+                            The conditional protocol shares across Rack Zones A,
+                            B, and C closely mirror the marginal distribution of
+                            <span class="math">F</span>. Observed counts
+                            <span class="math">O<sub>ij</sub></span> stay close
+                            to expected counts
+                            <span class="math">E<sub>ij</sub></span
+                            >, yielding a small
+                            <span class="math">&chi;&sup2; = 2.28</span> (<span
+                                class="math"
+                                >df = 4</span
+                            >,
+                            <span class="math">p = 0.685 &ge; &alpha;</span>).
+                            We
+                            <strong
+                                >fail to reject
+                                <span class="math">H<sub>0</sub></span></strong
+                            >: the minor fluctuations are consistent with random
+                            sampling variability under independence.
+                        </li>
+                    </ul>
+
+                    <h3>
+                        3. Conclusions: Statistical Association vs. Causality
+                    </h3>
+                    <p>
+                        Rejecting
+                        <span class="math">H<sub>0</sub></span> establishes
+                        <strong>statistical association (dependence)</strong>,
+                        which is strictly weaker than
+                        <strong>causality</strong>:
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Symmetry of the Test:</strong> The
+                            <span class="math">&chi;&sup2;</span> statistic is
+                            symmetric in <span class="math">X</span> and
+                            <span class="math">F</span> (<span class="math"
+                                >&chi;&sup2;(X, F) = &chi;&sup2;(F, X)</span
+                            >). An observational contingency table alone cannot
+                            tell whether <span class="math">X</span> causes
+                            <span class="math">F</span> or
+                            <span class="math">F</span> causes
+                            <span class="math">X</span>.
+                        </li>
+                        <li>
+                            <strong
+                                >Confounding Variables (<span class="math"
+                                    >X &larr; Z &rarr; F</span
+                                >):</strong
+                            >
+                            As shown in
+                            <em>Dataset 3 (Port-Scan Alerts vs. OS Crash)</em>,
+                            two variables can exhibit strong statistical
+                            dependence (<span class="math"
+                                >&chi;&sup2; = 24.83, p &lt; 10<sup
+                                    >&minus;6</sup
+                                ></span
+                            >) without a direct causal link. Port-scan alerts do
+                            not physically crash the operating system; rather, a
+                            shared hidden confounder
+                            <span class="math">Z</span> (e.g.,
+                            <em>unpatched public-facing legacy servers</em>)
+                            independently increases both port-scan exposure
+                            (<span class="math">X</span>) and crash risk (<span
+                                class="math"
+                                >F</span
+                            >).
+                        </li>
+                        <li>
+                            <strong>From Association to Causality:</strong>
+                            Proving a causal effect requires isolating
+                            interventions (such as randomized controlled
+                            experiments or adjusting for all confounders via
+                            causal models), whereas contingency-table
+                            <span class="math">&chi;&sup2;</span> tests measure
+                            purely observational co-occurrence.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // =====================================================
+            // DETERMINISTIC PRNG & PRESET DATASETS
+            // =====================================================
+            function mulberry32(seed) {
+                let a = seed >>> 0;
+                return function () {
+                    a |= 0;
+                    a = (a + 0x6d2b79f5) | 0;
+                    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                };
+            }
+
+            function shuffleWithSeed(arr, seed) {
+                const rng = mulberry32(seed);
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    const tmp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = tmp;
+                }
+                return arr;
+            }
+
+            function buildPresetText(key) {
+                if (key === "dependent") {
+                    const rLabels = [
+                        "Phishing",
+                        "Brute-Force",
+                        "SQL-Injection",
+                        "Zero-Day",
+                    ];
+                    const cLabels = ["Blocked", "Quarantined", "Breached"];
+                    const anchors = [
+                        "Phishing, Blocked",
+                        "Brute-Force, Quarantined",
+                        "SQL-Injection, Breached",
+                        "Zero-Day, Breached",
+                    ];
+                    const rem = [
+                        [17, 28, 14],
+                        [52, 13, 4],
+                        [22, 16, 11],
+                        [5, 9, 25],
+                    ];
+                    const rest = [];
+                    for (let i = 0; i < rLabels.length; i++) {
+                        for (let j = 0; j < cLabels.length; j++) {
+                            for (let k = 0; k < rem[i][j]; k++) {
+                                rest.push(`${rLabels[i]}, ${cLabels[j]}`);
+                            }
+                        }
+                    }
+                    shuffleWithSeed(rest, 2026);
+                    return (
+                        "Attack_Vector, Outcome\n" +
+                        anchors.concat(rest).join("\n")
+                    );
+                }
+
+                if (key === "independent") {
+                    const rLabels = ["Zone-A", "Zone-B", "Zone-C"];
+                    const cLabels = ["TCP", "UDP", "ICMP"];
+                    const anchors = [
+                        "Zone-A, TCP",
+                        "Zone-B, UDP",
+                        "Zone-C, ICMP",
+                    ];
+                    const rem = [
+                        [30, 20, 9],
+                        [47, 20, 12],
+                        [30, 17, 12],
+                    ];
+                    const rest = [];
+                    for (let i = 0; i < rLabels.length; i++) {
+                        for (let j = 0; j < cLabels.length; j++) {
+                            for (let k = 0; k < rem[i][j]; k++) {
+                                rest.push(`${rLabels[i]}, ${cLabels[j]}`);
+                            }
+                        }
+                    }
+                    shuffleWithSeed(rest, 7711);
+                    return (
+                        "Server_Zone, Protocol\n" +
+                        anchors.concat(rest).join("\n")
+                    );
+                }
+
+                if (key === "confounded") {
+                    const anchors = [
+                        "Low_Scans, Stable",
+                        "High_Scans, Crashed",
+                    ];
+                    const rest = [];
+                    for (let k = 0; k < 73; k++) rest.push("Low_Scans, Stable");
+                    for (let k = 0; k < 16; k++)
+                        rest.push("Low_Scans, Crashed");
+                    for (let k = 0; k < 42; k++)
+                        rest.push("High_Scans, Stable");
+                    for (let k = 0; k < 47; k++)
+                        rest.push("High_Scans, Crashed");
+                    shuffleWithSeed(rest, 9001);
+                    return (
+                        "Port_Scan_Alerts, System_Status\n" +
+                        anchors.concat(rest).join("\n")
+                    );
+                }
+
+                if (key === "numeric") {
+                    const rng = mulberry32(4242);
+                    const lines = ["CPU_Load_Pct, Response_ms"];
+                    for (let i = 0; i < 120; i++) {
+                        const cpu = 10 + rng() * 85;
+                        const u1 = Math.max(rng(), 1e-9),
+                            u2 = rng();
+                        const z =
+                            Math.sqrt(-2 * Math.log(u1)) *
+                            Math.cos(2 * Math.PI * u2);
+                        const lat = Math.max(5, 14 + 0.68 * cpu + 11 * z);
+                        lines.push(`${cpu.toFixed(1)}, ${lat.toFixed(1)}`);
+                    }
+                    return lines.join("\n");
+                }
+
+                return "";
+            }
+
+            // =====================================================
+            // CHI-SQUARE & INCOMPLETE GAMMA MATH (PURE JS)
+            // =====================================================
+            function logGamma(z) {
+                const p = [
+                    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                    771.32342877765313, -176.61502916214059, 12.507343278686905,
+                    -0.13857109526572012, 9.9843695780195716e-6,
+                    1.5056327351493116e-7,
+                ];
+                if (z < 0.5) {
+                    return (
+                        Math.log(Math.PI / Math.sin(Math.PI * z)) -
+                        logGamma(1 - z)
+                    );
+                }
+                z -= 1;
+                let x = p[0];
+                for (let i = 1; i < p.length; i++) x += p[i] / (z + i);
+                const t = z + 7.5;
+                return (
+                    0.5 * Math.log(2 * Math.PI) +
+                    (z + 0.5) * Math.log(t) -
+                    t +
+                    Math.log(x)
+                );
+            }
+
+            function gammaIncLower(a, x) {
+                if (x <= 0) return 0.0;
+                const gln = logGamma(a);
+                let ap = a,
+                    sum = 1.0 / a,
+                    del = sum;
+                for (let n = 1; n <= 1000; n++) {
+                    ap += 1.0;
+                    del *= x / ap;
+                    sum += del;
+                    if (Math.abs(del) < Math.abs(sum) * 1e-14) {
+                        return sum * Math.exp(-x + a * Math.log(x) - gln);
+                    }
+                }
+                return sum * Math.exp(-x + a * Math.log(x) - gln);
+            }
+
+            function gammaIncUpper(a, x) {
+                if (x <= 0) return 1.0;
+                const gln = logGamma(a);
+                let b = x + 1.0 - a;
+                let c = 1.0 / 1e-30;
+                let d = b !== 0 ? 1.0 / b : 1.0 / 1e-30;
+                let h = d;
+                for (let i = 1; i <= 1000; i++) {
+                    const an = -i * (i - a);
+                    b += 2.0;
+                    d = an * d + b;
+                    if (Math.abs(d) < 1e-30) d = 1e-30;
+                    c = b + an / c;
+                    if (Math.abs(c) < 1e-30) c = 1e-30;
+                    d = 1.0 / d;
+                    const del = d * c;
+                    h *= del;
+                    if (Math.abs(del - 1.0) < 1e-14) break;
+                }
+                return Math.exp(-x + a * Math.log(x) - gln) * h;
+            }
+
+            function chi2Survival(x, df) {
+                if (x <= 0 || df <= 0) return 1.0;
+                const a = df / 2.0,
+                    z = x / 2.0;
+                if (z < a + 1.0)
+                    return Math.max(
+                        0.0,
+                        Math.min(1.0, 1.0 - gammaIncLower(a, z)),
+                    );
+                return Math.max(0.0, Math.min(1.0, gammaIncUpper(a, z)));
+            }
+
+            function chi2CriticalValue(alpha, df) {
+                let lo = 0.0;
+                let hi = Math.max(df + 10.0 * Math.sqrt(2.0 * df), 50.0);
+                while (chi2Survival(hi, df) > alpha && hi < 1e7) hi *= 2.0;
+                for (let iter = 0; iter < 80; iter++) {
+                    const mid = 0.5 * (lo + hi);
+                    if (chi2Survival(mid, df) > alpha) lo = mid;
+                    else hi = mid;
+                }
+                return 0.5 * (lo + hi);
+            }
+
+            function chi2Pdf(x, df) {
+                if (x <= 0) return 0.0;
+                const k = df / 2.0;
+                return Math.exp(
+                    (k - 1.0) * Math.log(x) -
+                        x / 2.0 -
+                        k * Math.log(2.0) -
+                        logGamma(k),
+                );
+            }
+
+            // =====================================================
+            // DATASET PARSING & CONTINGENCY ENGINE
+            // =====================================================
+            function escapeHtml(str) {
+                return String(str)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            function splitLine(line, delim) {
+                if (delim === "SPACE") {
+                    return line.trim().split(/\s+/);
+                }
+                const out = [];
+                let cur = "",
+                    inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            cur += '"';
+                            i++;
+                        } else inQuotes = !inQuotes;
+                    } else if (ch === delim && !inQuotes) {
+                        out.push(cur.trim());
+                        cur = "";
+                    } else {
+                        cur += ch;
+                    }
+                }
+                out.push(cur.trim());
+                return out;
+            }
+
+            function detectDelimiter(sampleLines) {
+                const candidates = [",", ";", "\t"];
+                let best = null,
+                    bestScore = 0;
+                for (const d of candidates) {
+                    let score = 0;
+                    for (const line of sampleLines)
+                        score += splitLine(line, d).length - 1;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = d;
+                    }
+                }
+                return best || "SPACE";
+            }
+
+            function isNumericArray(vals) {
+                return (
+                    vals.length > 0 &&
+                    vals.every((v) => v !== "" && Number.isFinite(Number(v)))
+                );
+            }
+
+            function discretize3Bins(rawValues) {
+                const nums = rawValues.map(Number);
+                let minVal = Infinity,
+                    maxVal = -Infinity;
+                for (const v of nums) {
+                    if (v < minVal) minVal = v;
+                    if (v > maxVal) maxVal = v;
+                }
+                if (maxVal === minVal) {
+                    const lbl = `[${minVal.toFixed(1)}]`;
+                    return {
+                        binned: nums.map(() => lbl),
+                        orderedLevels: [lbl],
+                    };
+                }
+                const kBins = 3;
+                const width = (maxVal - minVal) / kBins;
+                const levels = [];
+                for (let b = 0; b < kBins; b++) {
+                    const lo = minVal + b * width;
+                    const hi = minVal + (b + 1) * width;
+                    levels.push(
+                        `[${lo.toFixed(1)}, ${hi.toFixed(1)}${b === kBins - 1 ? "]" : ")"}`,
+                    );
+                }
+                const binned = nums.map((v) => {
+                    let idx = Math.floor((v - minVal) / width);
+                    if (idx < 0) idx = 0;
+                    if (idx >= kBins) idx = kBins - 1;
+                    return levels[idx];
+                });
+                return { binned, orderedLevels: levels };
+            }
+
+            function parseDataset(rawText, hasHeader, autoBin) {
+                const lines = rawText
+                    .split(/\r?\n/)
+                    .map((l) => l.trim())
+                    .filter((l) => l.length > 0 && !l.startsWith("#"));
+
+                if (lines.length === 0) {
+                    return {
+                        error: "Dataset is empty. Select a preset, upload a file, or enter (X, F) pairs.",
+                    };
+                }
+
+                const delim = detectDelimiter(
+                    lines.slice(0, Math.min(10, lines.length)),
+                );
+                let varX = "X",
+                    varF = "F",
+                    startIdx = 0;
+
+                if (hasHeader) {
+                    const hdr = splitLine(lines[0], delim);
+                    if (hdr.length >= 2) {
+                        varX = hdr[0] || "X";
+                        varF = hdr[1] || "F";
+                        startIdx = 1;
+                    }
+                }
+
+                const obs = [];
+                let skipped = 0;
+                for (let i = startIdx; i < lines.length; i++) {
+                    const cols = splitLine(lines[i], delim);
+                    if (cols.length < 2 || cols[0] === "" || cols[1] === "") {
+                        skipped++;
+                        continue;
+                    }
+                    obs.push({ x: cols[0], f: cols[1] });
+                }
+
+                if (obs.length === 0) {
+                    return {
+                        error: "No valid bivariate (X, F) pairs found. Ensure each line has two values.",
+                    };
+                }
+
+                let rawX = obs.map((o) => o.x);
+                let rawF = obs.map((o) => o.f);
+                const xIsNum = isNumericArray(rawX);
+                const fIsNum = isNumericArray(rawF);
+
+                let xOrdered = null,
+                    fOrdered = null;
+                const notes = [];
+
+                if (autoBin && xIsNum && new Set(rawX).size > 8) {
+                    const res = discretize3Bins(rawX);
+                    rawX = res.binned;
+                    xOrdered = res.orderedLevels;
+                    notes.push(`${varX} binned (3 intervals)`);
+                }
+                if (autoBin && fIsNum && new Set(rawF).size > 8) {
+                    const res = discretize3Bins(rawF);
+                    rawF = res.binned;
+                    fOrdered = res.orderedLevels;
+                    notes.push(`${varF} binned (3 intervals)`);
+                }
+
+                const xLevels = [];
+                const xSet = new Set();
+                if (xOrdered) {
+                    for (const lv of xOrdered)
+                        if (rawX.includes(lv)) {
+                            xLevels.push(lv);
+                            xSet.add(lv);
+                        }
+                } else {
+                    for (const v of rawX)
+                        if (!xSet.has(v)) {
+                            xSet.add(v);
+                            xLevels.push(v);
+                        }
+                    if (xIsNum) xLevels.sort((a, b) => Number(a) - Number(b));
+                }
+
+                const fLevels = [];
+                const fSet = new Set();
+                if (fOrdered) {
+                    for (const lv of fOrdered)
+                        if (rawF.includes(lv)) {
+                            fLevels.push(lv);
+                            fSet.add(lv);
+                        }
+                } else {
+                    for (const v of rawF)
+                        if (!fSet.has(v)) {
+                            fSet.add(v);
+                            fLevels.push(v);
+                        }
+                    if (fIsNum) fLevels.sort((a, b) => Number(a) - Number(b));
+                }
+
+                const xMap = new Map(xLevels.map((v, idx) => [v, idx]));
+                const fMap = new Map(fLevels.map((v, idx) => [v, idx]));
+                const r = xLevels.length,
+                    c = fLevels.length;
+
+                const observed = Array.from({ length: r }, () =>
+                    new Array(c).fill(0),
+                );
+                for (let k = 0; k < obs.length; k++) {
+                    observed[xMap.get(rawX[k])][fMap.get(rawF[k])]++;
+                }
+
+                return {
+                    varX,
+                    varF,
+                    xLevels,
+                    fLevels,
+                    observed,
+                    N: obs.length,
+                    r,
+                    c,
+                    skipped,
+                    notes,
+                };
+            }
+
+            function computeContingencyStats(parsed, alpha) {
+                const { observed, N, r, c } = parsed;
+                const rowTotals = new Array(r).fill(0);
+                const colTotals = new Array(c).fill(0);
+
+                for (let i = 0; i < r; i++) {
+                    for (let j = 0; j < c; j++) {
+                        rowTotals[i] += observed[i][j];
+                        colTotals[j] += observed[i][j];
+                    }
+                }
+
+                const rowMarginals = rowTotals.map((t) => t / N);
+                const colMarginals = colTotals.map((t) => t / N);
+
+                const jointRel = Array.from({ length: r }, () =>
+                    new Array(c).fill(0),
+                );
+                const condFX = Array.from({ length: r }, () =>
+                    new Array(c).fill(0),
+                );
+                const condXF = Array.from({ length: r }, () =>
+                    new Array(c).fill(0),
+                );
+                const expected = Array.from({ length: r }, () =>
+                    new Array(c).fill(0),
+                );
+                const cellChi2 = Array.from({ length: r }, () =>
+                    new Array(c).fill(0),
+                );
+
+                let chi2 = 0;
+                let maxContrib = -1;
+                let maxCoord = { i: 0, j: 0 };
+
+                for (let i = 0; i < r; i++) {
+                    for (let j = 0; j < c; j++) {
+                        const O = observed[i][j];
+                        const E = (rowTotals[i] * colTotals[j]) / N;
+                        jointRel[i][j] = O / N;
+                        condFX[i][j] = rowTotals[i] > 0 ? O / rowTotals[i] : 0;
+                        condXF[i][j] = colTotals[j] > 0 ? O / colTotals[j] : 0;
+                        expected[i][j] = E;
+
+                        const contrib = E > 0 ? ((O - E) * (O - E)) / E : 0;
+                        cellChi2[i][j] = contrib;
+                        chi2 += contrib;
+
+                        if (contrib > maxContrib) {
+                            maxContrib = contrib;
+                            maxCoord = { i, j };
+                        }
+                    }
+                }
+
+                const df = (r - 1) * (c - 1);
+                const pValue = df >= 1 ? chi2Survival(chi2, df) : 1.0;
+                const critVal = df >= 1 ? chi2CriticalValue(alpha, df) : NaN;
+
+                return {
+                    rowTotals,
+                    colTotals,
+                    rowMarginals,
+                    colMarginals,
+                    jointRel,
+                    condFX,
+                    condXF,
+                    expected,
+                    cellChi2,
+                    chi2,
+                    df,
+                    pValue,
+                    critVal,
+                    maxCoord,
+                };
+            }
+
+            // =====================================================
+            // RENDERING TABLES & CHARTS
+            // =====================================================
+            function formatPVal(p) {
+                return p < 1e-4 ? p.toExponential(3) : p.toFixed(5);
+            }
+
+            function renderTables(parsed, stats) {
+                const { varX, varF, xLevels, fLevels, observed, N, r, c } =
+                    parsed;
+                const {
+                    rowTotals,
+                    colTotals,
+                    rowMarginals,
+                    colMarginals,
+                    jointRel,
+                    condFX,
+                    condXF,
+                    expected,
+                    cellChi2,
+                    chi2,
+                } = stats;
+
+                // 3A. Observed Joint & Marginals
+                let hObs = `<table class="matrix-table"><thead><tr>
+      <th>${escapeHtml(varX)} \\ ${escapeHtml(varF)}</th>`;
+                for (let j = 0; j < c; j++)
+                    hObs += `<th>${escapeHtml(fLevels[j])}</th>`;
+                hObs += `<th class="marginal-col">Row Marginal (n<sub>i&bull;</sub>)</th></tr></thead><tbody>`;
+
+                for (let i = 0; i < r; i++) {
+                    hObs += `<tr><td>${escapeHtml(xLevels[i])}</td>`;
+                    for (let j = 0; j < c; j++) {
+                        hObs += `<td>${observed[i][j]}<span class="cell-sub">${(jointRel[i][j] * 100).toFixed(1)}%</span></td>`;
+                    }
+                    hObs += `<td class="marginal-col">${rowTotals[i]}<span class="cell-sub">${(rowMarginals[i] * 100).toFixed(1)}%</span></td></tr>`;
+                }
+                hObs += `<tr class="marginal-row"><td>Col Marginal (n<sub>&bull;j</sub>)</td>`;
+                for (let j = 0; j < c; j++) {
+                    hObs += `<td>${colTotals[j]}<span class="cell-sub">${(colMarginals[j] * 100).toFixed(1)}%</span></td>`;
+                }
+                hObs += `<td class="marginal-col">N = ${N}<span class="cell-sub">100.0%</span></td></tr></tbody></table>`;
+                document.getElementById("wrapObserved").innerHTML = hObs;
+
+                // 3B. Conditional f(F | X)
+                let hFX = `<table class="matrix-table"><thead><tr>
+      <th>${escapeHtml(varX)} &darr; | ${escapeHtml(varF)} &rarr;</th>`;
+                for (let j = 0; j < c; j++)
+                    hFX += `<th>${escapeHtml(fLevels[j])}</th>`;
+                hFX += `<th class="marginal-col">Row Sum</th></tr></thead><tbody>`;
+                for (let i = 0; i < r; i++) {
+                    hFX += `<tr><td>${escapeHtml(xLevels[i])}</td>`;
+                    for (let j = 0; j < c; j++) {
+                        hFX += `<td>${(condFX[i][j] * 100).toFixed(1)}%</td>`;
+                    }
+                    hFX += `<td class="marginal-col">100.0%</td></tr>`;
+                }
+                hFX += `<tr class="marginal-row"><td>Marginal f(${escapeHtml(varF)})</td>`;
+                for (let j = 0; j < c; j++)
+                    hFX += `<td>${(colMarginals[j] * 100).toFixed(1)}%</td>`;
+                hFX += `<td class="marginal-col">100.0%</td></tr></tbody></table>`;
+                document.getElementById("wrapCondFX").innerHTML = hFX;
+
+                // 3C. Conditional f(X | F)
+                let hXF = `<table class="matrix-table"><thead><tr>
+      <th>${escapeHtml(varX)} &darr; | ${escapeHtml(varF)} &rarr;</th>`;
+                for (let j = 0; j < c; j++)
+                    hXF += `<th>${escapeHtml(fLevels[j])}</th>`;
+                hXF += `<th class="marginal-col">Marginal f(${escapeHtml(varX)})</th></tr></thead><tbody>`;
+                for (let i = 0; i < r; i++) {
+                    hXF += `<tr><td>${escapeHtml(xLevels[i])}</td>`;
+                    for (let j = 0; j < c; j++) {
+                        hXF += `<td>${(condXF[i][j] * 100).toFixed(1)}%</td>`;
+                    }
+                    hXF += `<td class="marginal-col">${(rowMarginals[i] * 100).toFixed(1)}%</td></tr>`;
+                }
+                hXF += `<tr class="marginal-row"><td>Col Sum</td>`;
+                for (let j = 0; j < c; j++) hXF += `<td>100.0%</td>`;
+                hXF += `<td class="marginal-col">100.0%</td></tr></tbody></table>`;
+                document.getElementById("wrapCondXF").innerHTML = hXF;
+
+                // 3D. Expected Frequencies E_ij & Chi-Square Contributions
+                let hExp = `<table class="matrix-table"><thead><tr>
+      <th>${escapeHtml(varX)} \\ ${escapeHtml(varF)}</th>`;
+                for (let j = 0; j < c; j++)
+                    hExp += `<th>${escapeHtml(fLevels[j])}</th>`;
+                hExp += `<th class="marginal-col">Row Total</th></tr></thead><tbody>`;
+
+                for (let i = 0; i < r; i++) {
+                    hExp += `<tr><td>${escapeHtml(xLevels[i])}</td>`;
+                    let rowChi = 0;
+                    for (let j = 0; j < c; j++) {
+                        rowChi += cellChi2[i][j];
+                        hExp += `<td><strong>E: ${expected[i][j].toFixed(2)}</strong>
+          <span class="cell-sub">O: ${observed[i][j]} &bull; &chi;&sup2;<sub>ij</sub>: ${cellChi2[i][j].toFixed(3)}</span></td>`;
+                    }
+                    hExp += `<td class="marginal-col">${rowTotals[i]}<span class="cell-sub">&Sigma;&chi;&sup2; = ${rowChi.toFixed(2)}</span></td></tr>`;
+                }
+                hExp += `<tr class="marginal-row"><td>Col Total</td>`;
+                for (let j = 0; j < c; j++) {
+                    let colChi = 0;
+                    for (let i = 0; i < r; i++) colChi += cellChi2[i][j];
+                    hExp += `<td>${colTotals[j]}<span class="cell-sub">&Sigma;&chi;&sup2; = ${colChi.toFixed(2)}</span></td>`;
+                }
+                hExp += `<td class="marginal-col">N = ${N}<span class="cell-sub">Total &chi;&sup2; = ${chi2.toFixed(3)}</span></td></tr></tbody></table>`;
+                document.getElementById("wrapExpected").innerHTML = hExp;
+            }
+
+            const PALETTE = [
+                "#2563eb",
+                "#10b981",
+                "#f59e0b",
+                "#ef4444",
+                "#8b5cf6",
+                "#06b6d4",
+                "#ec4899",
+            ];
+
+            function truncateLabel(str, maxLen = 13) {
+                const s = String(str);
+                return s.length > maxLen ? s.slice(0, maxLen - 1) + "…" : s;
+            }
+
+            function drawConditionalCanvas(parsed, stats) {
+                const cvs = document.getElementById("cvsConditional");
+                const ctx = cvs.getContext("2d");
+                const w = cvs.width,
+                    h = cvs.height;
+                ctx.clearRect(0, 0, w, h);
+
+                const { xLevels, fLevels, r, c } = parsed;
+                const { condFX, colMarginals, rowTotals } = stats;
+
+                const leftPad = 112,
+                    rightPad = 52,
+                    topPad = 20,
+                    botPad = 26;
+                const plotW = w - leftPad - rightPad;
+                const totalRows = r + 1;
+                const rowStep = (h - topPad - botPad) / totalRows;
+                const barH = Math.min(26, rowStep * 0.64);
+
+                const drawBar = (yCenter, probs, label, nLabel, isMarginal) => {
+                    const yTop = yCenter - barH / 2;
+                    ctx.fillStyle = isMarginal ? "#1e3a8a" : "#1e293b";
+                    ctx.font = isMarginal
+                        ? "bold 12px sans-serif"
+                        : "600 12px sans-serif";
+                    ctx.textAlign = "right";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(truncateLabel(label), leftPad - 10, yCenter);
+
+                    let curX = leftPad;
+                    for (let j = 0; j < c; j++) {
+                        const segW = probs[j] * plotW;
+                        ctx.fillStyle = PALETTE[j % PALETTE.length];
+                        ctx.globalAlpha = isMarginal ? 0.94 : 0.85;
+                        ctx.fillRect(curX, yTop, segW, barH);
+                        ctx.globalAlpha = 1.0;
+
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.lineWidth = 1.2;
+                        ctx.strokeRect(curX, yTop, segW, barH);
+
+                        if (segW >= 34) {
+                            ctx.fillStyle = "#ffffff";
+                            ctx.font = "bold 11px sans-serif";
+                            ctx.textAlign = "center";
+                            ctx.fillText(
+                                `${(probs[j] * 100).toFixed(0)}%`,
+                                curX + segW / 2,
+                                yCenter,
+                            );
+                        }
+                        curX += segW;
+                    }
+
+                    if (isMarginal) {
+                        ctx.strokeStyle = "#0f172a";
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeRect(leftPad, yTop, plotW, barH);
+                    }
+
+                    ctx.fillStyle = "#475569";
+                    ctx.font = "11px sans-serif";
+                    ctx.textAlign = "left";
+                    ctx.fillText(nLabel, leftPad + plotW + 8, yCenter);
+                };
+
+                const margY = topPad + rowStep * 0.5;
+                drawBar(
+                    margY,
+                    colMarginals,
+                    `Marginal f(${parsed.varF})`,
+                    `N=${parsed.N}`,
+                    true,
+                );
+
+                ctx.strokeStyle = "#cbd5e1";
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(12, topPad + rowStep);
+                ctx.lineTo(w - 12, topPad + rowStep);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                for (let i = 0; i < r; i++) {
+                    drawBar(
+                        topPad + rowStep * (i + 1.5),
+                        condFX[i],
+                        xLevels[i],
+                        `n=${rowTotals[i]}`,
+                        false,
+                    );
+                }
+
+                // Marginal boundary guides
+                let guideX = leftPad;
+                ctx.strokeStyle = "rgba(15, 23, 42, 0.45)";
+                ctx.lineWidth = 1.2;
+                ctx.setLineDash([4, 3]);
+                for (let j = 0; j < c - 1; j++) {
+                    guideX += colMarginals[j] * plotW;
+                    ctx.beginPath();
+                    ctx.moveTo(guideX, margY + barH / 2);
+                    ctx.lineTo(guideX, h - botPad);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = "#475569";
+                ctx.font = "11px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                for (let pct = 0; pct <= 100; pct += 25) {
+                    ctx.fillText(
+                        `${pct}%`,
+                        leftPad + (pct / 100) * plotW,
+                        h - botPad + 6,
+                    );
+                }
+
+                document.getElementById("legendConditional").innerHTML = fLevels
+                    .map(
+                        (lv, j) =>
+                            `<span class="legend-item"><span class="legend-dot" style="background:${PALETTE[j % PALETTE.length]};"></span>${escapeHtml(lv)}</span>`,
+                    )
+                    .join("");
+            }
+
+            function drawChi2Distribution(stats, alpha) {
+                const cvs = document.getElementById("cvsChi2");
+                const ctx = cvs.getContext("2d");
+                const w = cvs.width,
+                    h = cvs.height;
+                ctx.clearRect(0, 0, w, h);
+
+                const { df, chi2, critVal, pValue } = stats;
+                const leftPad = 48,
+                    rightPad = 24,
+                    topPad = 32,
+                    botPad = 40;
+                const plotW = w - leftPad - rightPad;
+                const plotH = h - topPad - botPad;
+
+                const naturalMax = Math.max(
+                    critVal * 1.45,
+                    df + 4.5 * Math.sqrt(2 * df),
+                    10,
+                );
+                const offChart = chi2 > naturalMax * 1.45;
+                const xMax = offChart
+                    ? naturalMax
+                    : Math.max(naturalMax, chi2 * 1.12);
+                const yCap =
+                    df >= 3
+                        ? chi2Pdf(Math.max(df - 2, 0.25), df) * 1.22
+                        : df === 2
+                          ? 0.56
+                          : 1.25;
+
+                const toX = (x) => leftPad + (x / xMax) * plotW;
+                const toY = (y) =>
+                    topPad + plotH - (Math.min(y, yCap) / yCap) * plotH;
+
+                // Shaded rejection tail
+                const startX = Math.min(critVal, xMax);
+                if (startX < xMax) {
+                    ctx.fillStyle = "rgba(239, 68, 68, 0.28)";
+                    ctx.beginPath();
+                    ctx.moveTo(toX(startX), toY(0));
+                    for (let s = 0; s <= 120; s++) {
+                        const t = startX + (s / 120) * (xMax - startX);
+                        ctx.lineTo(toX(t), toY(chi2Pdf(Math.max(t, 1e-4), df)));
+                    }
+                    ctx.lineTo(toX(xMax), toY(0));
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // PDF Curve
+                ctx.strokeStyle = "#1e293b";
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                for (let s = 0; s <= 280; s++) {
+                    const t = Math.max(xMax * 0.006, (s / 280) * xMax);
+                    const px = toX(t),
+                        py = toY(chi2Pdf(t, df));
+                    if (s === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                // Axes
+                ctx.strokeStyle = "#64748b";
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(leftPad, topPad);
+                ctx.lineTo(leftPad, topPad + plotH);
+                ctx.lineTo(leftPad + plotW, topPad + plotH);
+                ctx.stroke();
+
+                // Critical line
+                const critPx = toX(critVal);
+                ctx.strokeStyle = "#dc2626";
+                ctx.lineWidth = 1.8;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.moveTo(critPx, topPad + 10);
+                ctx.lineTo(critPx, topPad + plotH);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = "#b91c1c";
+                ctx.font = "bold 11px sans-serif";
+                ctx.textAlign = critPx > w - 140 ? "right" : "left";
+                ctx.fillText(
+                    `Crit χ²(${alpha}) = ${critVal.toFixed(2)}`,
+                    critPx + (critPx > w - 140 ? -5 : 5),
+                    topPad + 12,
+                );
+
+                // Observed chi2 marker
+                if (!offChart) {
+                    const obsPx = toX(chi2);
+                    ctx.strokeStyle = "#2563eb";
+                    ctx.lineWidth = 2.4;
+                    ctx.beginPath();
+                    ctx.moveTo(obsPx, topPad + 26);
+                    ctx.lineTo(obsPx, topPad + plotH);
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#2563eb";
+                    ctx.beginPath();
+                    ctx.arc(
+                        obsPx,
+                        toY(chi2Pdf(Math.max(chi2, 1e-4), df)),
+                        4.5,
+                        0,
+                        Math.PI * 2,
+                    );
+                    ctx.fill();
+
+                    ctx.font = "bold 12px sans-serif";
+                    const rightSide = obsPx > w - 170;
+                    ctx.textAlign = rightSide ? "right" : "left";
+                    ctx.fillText(
+                        `Obs χ² = ${chi2.toFixed(2)} (p=${formatPVal(pValue)})`,
+                        obsPx + (rightSide ? -6 : 6),
+                        topPad + 30,
+                    );
+                } else {
+                    ctx.fillStyle = "#1d4ed8";
+                    ctx.font = "bold 12px sans-serif";
+                    ctx.textAlign = "right";
+                    ctx.fillText(
+                        `Obs χ² = ${chi2.toFixed(2)} (upper tail →, p=${formatPVal(pValue)})`,
+                        leftPad + plotW - 4,
+                        topPad + 30,
+                    );
+                }
+
+                // X ticks
+                ctx.fillStyle = "#475569";
+                ctx.font = "11px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                for (let k = 0; k <= 6; k++) {
+                    const xv = (k / 6) * xMax;
+                    ctx.fillText(xv.toFixed(1), toX(xv), topPad + plotH + 6);
+                }
+                ctx.fillText(
+                    `χ² (df = ${df})`,
+                    leftPad + plotW / 2,
+                    topPad + plotH + 22,
+                );
+            }
+
+            // =====================================================
+            // MAIN EXECUTION PIPELINE
+            // =====================================================
+            function runAnalysis() {
+                const rawText = document.getElementById("rawInput").value;
+                const hasHeader = document.getElementById("chkHeader").checked;
+                const autoBin = document.getElementById("chkAutoBin").checked;
+                const alpha = parseFloat(
+                    document.getElementById("alphaSelect").value,
+                );
+
+                const parsed = parseDataset(rawText, hasHeader, autoBin);
+                const metaEl = document.getElementById("parseMeta");
+                const verdictEl = document.getElementById("verdictBox");
+
+                if (parsed.error) {
+                    metaEl.innerHTML = `<span class="sub-pill" style="color:#b91c1c; border-color:#fecaca; background:#fef2f2;">Parse Error</span>`;
+                    verdictEl.className = "status-banner error";
+                    verdictEl.innerHTML = `<strong>Input Error:</strong> ${escapeHtml(parsed.error)}`;
+                    clearOutputs();
+                    return;
+                }
+
+                let pills = `<span class="sub-pill">Variables: <strong>${escapeHtml(parsed.varX)}</strong> &times; <strong>${escapeHtml(parsed.varF)}</strong></span>`;
+                pills += `<span class="sub-pill">N = ${parsed.N}</span>`;
+                pills += `<span class="sub-pill">Dimensions: ${parsed.r} &times; ${parsed.c}</span>`;
+                if (parsed.notes.length > 0) {
+                    pills += `<span class="sub-pill" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">${escapeHtml(parsed.notes.join(" | "))}</span>`;
+                }
+                if (parsed.skipped > 0) {
+                    pills += `<span class="sub-pill" style="background:#fffbeb; color:#92400e;">Skipped ${parsed.skipped} invalid row(s)</span>`;
+                }
+                metaEl.innerHTML = pills;
+
+                if (parsed.r < 2 || parsed.c < 2) {
+                    verdictEl.className = "status-banner error";
+                    verdictEl.innerHTML = `<strong>Insufficient Dimensions (${parsed.r} &times; ${parsed.c}):</strong> Need at least 2 distinct values for both <span class="math">${escapeHtml(parsed.varX)}</span> and <span class="math">${escapeHtml(parsed.varF)}</span> (<span class="math">df &ge; 1</span>).`;
+                    document.getElementById("kpiN").innerText = parsed.N;
+                    document.getElementById("kpiDims").innerText =
+                        `Table: ${parsed.r} × ${parsed.c} | df = 0`;
+                    document.getElementById("kpiChi2").innerText = "--";
+                    document.getElementById("kpiCrit").innerText = "--";
+                    document.getElementById("kpiPval").innerText = "--";
+                    document.getElementById("kpiDecision").innerText =
+                        "Requires ≥ 2×2";
+                    clearOutputs();
+                    return;
+                }
+
+                const stats = computeContingencyStats(parsed, alpha);
+                const rejectH0 = stats.pValue < alpha;
+
+                document.getElementById("kpiN").innerText = parsed.N;
+                document.getElementById("kpiDims").innerText =
+                    `Table: ${parsed.r} × ${parsed.c} | df = ${stats.df}`;
+                document.getElementById("kpiChi2").innerText =
+                    stats.chi2.toFixed(3);
+                document.getElementById("kpiCrit").innerText =
+                    `Critical χ²(${alpha}): ${stats.critVal.toFixed(3)}`;
+                document.getElementById("kpiPval").innerText = formatPVal(
+                    stats.pValue,
+                );
+                document.getElementById("kpiDecision").innerText = rejectH0
+                    ? `Reject H₀ (p < ${alpha})`
+                    : `Fail to Reject H₀ (p ≥ ${alpha})`;
+
+                const { i: mi, j: mj } = stats.maxCoord;
+                const topX = escapeHtml(parsed.xLevels[mi]);
+                const topF = escapeHtml(parsed.fLevels[mj]);
+
+                if (rejectH0) {
+                    verdictEl.className = "status-banner dependent";
+                    verdictEl.innerHTML = `
+        <strong>Interpretation — Statistically Dependent (Reject H<sub>0</sub> at &alpha; = ${alpha}):</strong>
+        Since <span class="math">&chi;&sup2; = ${stats.chi2.toFixed(3)} &gt; ${stats.critVal.toFixed(3)}</span>
+        (<span class="math">p = ${formatPVal(stats.pValue)} &lt; ${alpha}</span>), the variables
+        <strong>${escapeHtml(parsed.varX)}</strong> and <strong>${escapeHtml(parsed.varF)}</strong> are statistically dependent.
+        The largest discrepancy between observed and expected counts occurs at <strong>(${topX}, ${topF})</strong>
+        (<span class="math">O = ${parsed.observed[mi][mj]}</span> vs. <span class="math">E = ${stats.expected[mi][mj].toFixed(2)}</span>,
+        contributing <span class="math">&chi;&sup2;<sub>ij</sub> = ${stats.cellChi2[mi][mj].toFixed(2)}</span>).
+      `;
+                } else {
+                    verdictEl.className = "status-banner independent";
+                    verdictEl.innerHTML = `
+        <strong>Interpretation — Statistically Independent (Fail to Reject H<sub>0</sub> at &alpha; = ${alpha}):</strong>
+        Since <span class="math">&chi;&sup2; = ${stats.chi2.toFixed(3)} &le; ${stats.critVal.toFixed(3)}</span>
+        (<span class="math">p = ${formatPVal(stats.pValue)} &ge; ${alpha}</span>), there is no statistically significant evidence of dependence
+        between <strong>${escapeHtml(parsed.varX)}</strong> and <strong>${escapeHtml(parsed.varF)}</strong>.
+        Conditional frequencies closely match the marginal distributions; minor differences are consistent with random sampling variability.
+      `;
+                }
+
+                renderTables(parsed, stats);
+                drawConditionalCanvas(parsed, stats);
+                drawChi2Distribution(stats, alpha);
+            }
+
+            function clearOutputs() {
+                [
+                    "wrapObserved",
+                    "wrapCondFX",
+                    "wrapCondXF",
+                    "wrapExpected",
+                ].forEach((id) => {
+                    document.getElementById(id).innerHTML =
+                        `<div style="padding:12px; color:var(--text-muted); font-size:0.9rem;">No valid contingency table available.</div>`;
+                });
+                ["cvsConditional", "cvsChi2"].forEach((id) => {
+                    const cvs = document.getElementById(id);
+                    cvs.getContext("2d").clearRect(0, 0, cvs.width, cvs.height);
+                });
+                document.getElementById("legendConditional").innerHTML = "";
+            }
+
+            // =====================================================
+            // LISTENERS & INIT
+            // =====================================================
+            document
+                .getElementById("presetSelect")
+                .addEventListener("change", (e) => {
+                    document.getElementById("chkHeader").checked = true;
+                    document.getElementById("rawInput").value = buildPresetText(
+                        e.target.value,
+                    );
+                    runAnalysis();
+                });
+
+            document
+                .getElementById("btnAnalyze")
+                .addEventListener("click", runAnalysis);
+            document
+                .getElementById("btnClear")
+                .addEventListener("click", () => {
+                    document.getElementById("rawInput").value = "";
+                    runAnalysis();
+                });
+
+            ["alphaSelect", "chkHeader", "chkAutoBin"].forEach((id) => {
+                document
+                    .getElementById(id)
+                    .addEventListener("change", runAnalysis);
+            });
+
+            document
+                .getElementById("fileUpload")
+                .addEventListener("change", (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        document.getElementById("rawInput").value =
+                            ev.target.result;
+                        runAnalysis();
+                    };
+                    reader.readAsText(file);
+                });
+
+            // Initial load
+            document.getElementById("rawInput").value =
+                buildPresetText("dependent");
+            runAnalysis();
+        </script>
+    </body>
+</html>
